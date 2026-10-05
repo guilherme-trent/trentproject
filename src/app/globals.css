@@ -1,0 +1,17 @@
+@import "tailwindcss";
+
+@theme inline {
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+html,
+body {
+  background: #000;
+  color: #fff;
+  /* Experiência em tela cheia: sem bounce de scroll nem pull-to-refresh no mobile. */
+  overscroll-behavior: none;
+  /* Remove o delay de double-tap-to-zoom em toques. */
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
