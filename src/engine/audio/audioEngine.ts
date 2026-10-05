@@ -24,7 +24,13 @@ const syncState = () => {
 
 type AudioContextCtor = typeof AudioContext;
 
-export function unlockAudio(): AudioContext | null {
+/**
+ * Cria o AudioContext ANTES do gesto (ele nasce `suspended`, o que não exige
+ * ativação do usuário). A primeira criação inicializa o backend de áudio do
+ * processo e custa ~170ms (medido) — feita em idle durante a tela de ignição,
+ * ela sai do handler do clique, onde travava o próximo paint.
+ */
+export function prepareAudio(): AudioContext | null {
   if (typeof window === 'undefined') return null;
 
   const Ctor: AudioContextCtor | undefined =
@@ -50,6 +56,14 @@ export function unlockAudio(): AudioContext | null {
       }
     });
   }
+
+  return context;
+}
+
+/** Deve rodar SÍNCRONA dentro do gesto: retoma o contexto (preparado antes, se possível). */
+export function unlockAudio(): AudioContext | null {
+  const context = prepareAudio();
+  if (!context) return null;
 
   // iOS/Safari antigos só "acordam" de fato ao tocar um buffer dentro do gesto.
   const silence = context.createBuffer(1, 1, context.sampleRate);

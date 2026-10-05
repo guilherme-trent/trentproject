@@ -1,6 +1,9 @@
 'use client';
 
+import { useEffect } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
+import { prepareAudio } from '@/engine/audio/audioEngine';
+import { runWhenIdle } from '@/engine/lib/idle';
 import { ignite } from '@/engine/ignition';
 
 /**
@@ -17,6 +20,9 @@ import { ignite } from '@/engine/ignition';
  */
 export function StartPrompt() {
   const reduceMotion = useReducedMotion();
+
+  // Enquanto o usuário lê o convite, o backend de áudio inicializa em idle.
+  useEffect(() => runWhenIdle(() => void prepareAudio(), 2000), []);
 
   return (
     <motion.button

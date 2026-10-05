@@ -3,9 +3,11 @@
 import { useLayoutEffect, useState } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { useAppStore } from '../store/useAppStore';
-import { detectInitialTier } from '../config/performance';
+import { detectInitialTier, tierCapFromRenderer } from '../config/performance';
 import { PerformanceGovernor } from './PerformanceGovernor';
 import { SceneRouter } from './SceneRouter';
+import { PostFX } from './PostFX';
+import { installEngineDebug } from '../debug';
 
 /**
  * O <Canvas> do motor. Carregado apenas no cliente (ver CanvasLayer) — three.js
@@ -32,6 +34,7 @@ export function EngineCanvas() {
 
   useLayoutEffect(() => {
     useAppStore.getState().hydratePerformance(initialTier);
+    installEngineDebug();
   }, [initialTier]);
 
   return (
@@ -39,10 +42,21 @@ export function EngineCanvas() {
       dpr={dpr}
       gl={glAttributes}
       camera={{ position: [0, 0, 5], fov: 45, near: 0.1, far: 100 }}
-      onCreated={({ gl }) => gl.setClearColor(0x000000, 1)}
+      onCreated={({ gl }) => {
+        gl.setClearColor(0x000000, 1);
+        // Em produção, não consultar o driver após cada link de programa
+        // (getProgramParameter força sincronização CPU↔GPU).
+        gl.debug.checkShaderErrors = process.env.NODE_ENV !== 'production';
+        // Com o contexto criado, a GPU real refina o palpite feito por núcleos/memória.
+        const context = gl.getContext();
+        const info = context.getExtension('WEBGL_debug_renderer_info');
+        const renderer = String(context.getParameter(info ? info.UNMASKED_RENDERER_WEBGL : context.RENDERER));
+        useAppStore.getState().capTier(tierCapFromRenderer(renderer));
+      }}
     >
       <PerformanceGovernor />
       <SceneRouter />
+      <PostFX />
     </Canvas>
   );
 }

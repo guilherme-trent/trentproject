@@ -1,42 +1,73 @@
 'use client';
 
-import { useMemo } from 'react';
-import { useThree } from '@react-three/fiber';
-import { getConstellation, prepareConstellation } from './constellationLoader';
+import { useEffect, useMemo, useState } from 'react';
+import { useFrame, useThree } from '@react-three/fiber';
+import { useAppStore } from '@/engine/store/useAppStore';
+import { clampDelta } from '@/engine/lib/time';
+import type { WarmupContext } from '@/engine/scenes/defineScene';
+import { getYggdrasil, prepareYggdrasil } from './yggdrasil/loader';
+import { acquireHubKit, releaseHubKit, warmHubKit } from './kit';
+import { applyFraming } from './uniforms';
 import { computeHubFraming } from './framing';
-import { Constellation } from './Constellation';
+import { HubDirector, type HubArrival } from './director';
+import { YggdrasilTree } from './YggdrasilTree';
+import { NexusPoints } from './NexusPoints';
+import { Nebula } from './Nebula';
 import { BeamRemnant } from './BeamRemnant';
 import { HubCameraRig } from './HubCameraRig';
+import { registerDebug } from '@/engine/debug';
 
-const DEFAULT_FOV = 45;
-
-/**
- * Executado pelo defineScene ANTES da montagem — na prática, durante a intro
- * (o SceneRouter pré-carrega a próxima cena). Quando o feixe estilhaça, o
- * grafo já está pronto e a hub monta no mesmo frame.
- */
+/** CPU: gera a árvore num Web Worker (disparado durante a intro). */
 export async function prepare() {
-  await prepareConstellation();
+  await prepareYggdrasil();
+}
+
+/** GPU: compila os shaders e sobe os buffers da hub enquanto a cena anterior roda. */
+export async function warmup(context: WarmupContext) {
+  await warmHubKit(context);
 }
 
 /**
- * Cena 'hub' — A Constelação Neural.
+ * Cena 'hub' — A Yggdrasil Cósmica.
  *
- *   BeamRemnant   o feixe da intro, dissolvendo (costura da transição)
- *   Constellation nós + sinapses explodindo do feixe e girando
- *   HubCameraRig  parallax pelo pointer + deriva + aproximação lenta
+ *   Nebula         fumaça de simplex noise ao fundo (1 passe de tela cheia)
+ *   YggdrasilTree  milhares de linhas do tempo torcidas (1 draw call)
+ *   NexusPoints    os 3 pilares interativos (raycast analítico)
+ *   BeamRemnant    o feixe da intro, dissolvendo enquanto a árvore brota
+ *   HubCameraRig   parallax, deriva e o mergulho
+ *
+ * Um único useFrame "maestro" (prioridade -1: roda antes dos demais) avança o
+ * HubDirector, que escreve os uniforms compartilhados. Nenhum componente da
+ * hub re-renderiza por frame.
  */
 export default function HubScene() {
-  const data = getConstellation();
+  const data = getYggdrasil();
+  const [kit] = useState(acquireHubKit);
+  const [arrival] = useState<HubArrival>(() =>
+    useAppStore.getState().previousScene === 'intro' ? 'beam' : 'return',
+  );
+  const [director] = useState(() => new HubDirector(kit.uniforms, arrival));
+
   const aspect = useThree((state) => state.size.width / state.size.height);
-  const fov = useThree((state) => ('fov' in state.camera ? state.camera.fov : DEFAULT_FOV));
-  const framing = useMemo(() => computeHubFraming(aspect, fov, data.radius), [aspect, fov, data.radius]);
+  const framing = useMemo(() => computeHubFraming(data.bounds, aspect), [data.bounds, aspect]);
+
+  useEffect(() => applyFraming(kit.uniforms, framing), [kit, framing]);
+  useEffect(() => () => releaseHubKit(kit), [kit]);
+  useEffect(() => registerDebug('hub', { kit, director }), [kit, director]);
+
+  useFrame((state, delta) => {
+    const realm = director.tick(state.clock.elapsedTime, clampDelta(delta));
+    if (realm) useAppStore.getState().setScene(realm);
+  }, -1);
 
   return (
     <>
-      <HubCameraRig distance={framing.distance} />
-      <Constellation data={data} framing={framing} />
-      <BeamRemnant />
+      <Nebula kit={kit} />
+      <YggdrasilTree kit={kit} data={data} director={director}>
+        <NexusPoints kit={kit} director={director} positions={data.nexus} />
+      </YggdrasilTree>
+      {arrival === 'beam' && <BeamRemnant kit={kit} />}
+      <HubCameraRig framing={framing} director={director} />
     </>
   );
 }

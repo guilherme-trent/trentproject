@@ -9,4 +9,5 @@ import type { SceneId } from '@/engine/config/scenes';
 export const SCENES: Partial<Record<SceneId, SceneDefinition>> = {
   intro: defineScene(() => import('./intro/IntroScene')),
   hub: defineScene(() => import('./hub/HubScene')),
+  realm_architecture: defineScene(() => import('./realm-architecture/ArchitectureScene')),
 };

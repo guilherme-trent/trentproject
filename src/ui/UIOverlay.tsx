@@ -4,8 +4,9 @@ import { AnimatePresence } from 'framer-motion';
 import { useAppStore } from '@/engine/store/useAppStore';
 import { LoadingScreen } from './LoadingScreen';
 import { StartPrompt } from './StartPrompt';
+import { RealmHud } from './RealmHud';
 
-type OverlayView = 'loading' | 'start' | null;
+type OverlayView = 'loading' | 'start' | 'realm' | null;
 
 /**
  * Camada de UI (z-10) acima do Canvas.
@@ -20,13 +21,20 @@ export function UIOverlay() {
   const isLoaded = useAppStore((state) => state.isLoaded);
   const currentScene = useAppStore((state) => state.currentScene);
 
-  const view: OverlayView = !isLoaded ? 'loading' : currentScene === 'boot' ? 'start' : null;
+  const view: OverlayView = !isLoaded
+    ? 'loading'
+    : currentScene === 'boot'
+      ? 'start'
+      : currentScene.startsWith('realm_')
+        ? 'realm'
+        : null;
 
   return (
     <div className="pointer-events-none fixed inset-0 z-10">
       <AnimatePresence mode="wait">
         {view === 'loading' && <LoadingScreen key="loading" />}
         {view === 'start' && <StartPrompt key="start" />}
+        {view === 'realm' && <RealmHud key={currentScene} scene={currentScene} />}
       </AnimatePresence>
     </div>
   );

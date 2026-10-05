@@ -1,6 +1,4 @@
-import { AdditiveBlending } from 'three';
-import { shaderMaterial } from '@react-three/drei';
-import { extend, type ThreeElement } from '@react-three/fiber';
+import { AdditiveBlending, ShaderMaterial } from 'three';
 import { float, glsl } from '@/shaders/glsl';
 import { FULLSCREEN_VERTEX, SCREEN_SPACE_CHUNK } from '@/shaders/fullscreen';
 import { energyBeamChunk } from '@/shaders/chunks/energyBeam.glsl';
@@ -8,8 +6,8 @@ import { BEAM_HANDOFF } from '../../shared/handoff';
 
 /**
  * O feixe remanescente: o mesmo `energyBeam()` da intro, travado no estado de
- * handoff (ponta abaixo da tela), dissolvendo enquanto os nós estilhaçam.
- * Mesmo pipeline de saída da intro (ACES + sRGB) para o pixel bater 1:1.
+ * handoff (ponta abaixo da tela), dissolvendo enquanto a árvore brota dele.
+ * Mesmo pipeline de saída da intro para o pixel bater 1:1 na troca de cena.
  */
 const fragmentShader = glsl`
 uniform float uTime;
@@ -29,39 +27,26 @@ void main() {
 }
 `;
 
-// `type` (não `interface`): só aliases satisfazem a assinatura de índice que o drei exige.
-type BeamRemnantUniforms = {
-  uTime: number;
-  uAspect: number;
-  uIntensity: number;
-};
+export class BeamRemnantMaterial extends ShaderMaterial {
+  constructor() {
+    super({
+      vertexShader: FULLSCREEN_VERTEX,
+      fragmentShader,
+      uniforms: {
+        uTime: { value: BEAM_HANDOFF.time },
+        uAspect: { value: 1 },
+        uIntensity: { value: BEAM_HANDOFF.intensity },
+      },
+      transparent: true,
+      depthTest: false,
+      depthWrite: false,
+      blending: AdditiveBlending, // soma com a árvore em vez de cobri-la
+    });
+  }
 
-// Anotação explícita: sem ela, `as const` do handoff tiparia os uniforms como literais (3.1, 1).
-const uniforms: BeamRemnantUniforms = {
-  uTime: BEAM_HANDOFF.time,
-  uAspect: 1,
-  uIntensity: BEAM_HANDOFF.intensity,
-};
-
-export const BeamRemnantMaterial = shaderMaterial(
-  uniforms,
-  FULLSCREEN_VERTEX,
-  fragmentShader,
-  (material) => {
-    if (!material) return;
-    material.transparent = true;
-    material.depthTest = false;
-    material.depthWrite = false;
-    material.blending = AdditiveBlending; // soma com os nós em vez de cobri-los
-  },
-);
-
-export type BeamRemnantMaterialImpl = InstanceType<typeof BeamRemnantMaterial>;
-
-extend({ BeamRemnantMaterial });
-
-declare module '@react-three/fiber' {
-  interface ThreeElements {
-    beamRemnantMaterial: ThreeElement<typeof BeamRemnantMaterial>;
+  setFrame(time: number, intensity: number, aspect: number) {
+    this.uniforms.uTime.value = time;
+    this.uniforms.uIntensity.value = intensity;
+    this.uniforms.uAspect.value = aspect;
   }
 }

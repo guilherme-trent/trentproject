@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { useThree } from '@react-three/fiber';
 import { useAppStore } from '../store/useAppStore';
 import type { SceneId } from '../config/scenes';
+import { compileForPipeline } from '../gl/warmup';
 
 /**
  * Sinaliza `isLoaded = true` quando a cena está realmente pronta para ser vista.
@@ -12,7 +13,8 @@ import type { SceneId } from '../config/scenes';
  * os assets suspensos resolveram. Antes de liberar a UI ainda:
  *   1. Pré-compila todos os shaders da cena (`compileAsync`, usa
  *      KHR_parallel_shader_compile quando disponível) — elimina o "stutter" do
- *      primeiro frame em que um material aparece.
+ *      primeiro frame em que um material aparece. Normalmente o warmup já fez
+ *      isso durante a cena anterior; aqui é a rede de segurança.
  *   2. Espera um requestAnimationFrame para garantir que o frame foi pintado.
  */
 export function SceneReadySignal({ sceneId }: { sceneId: SceneId }) {
@@ -24,14 +26,13 @@ export function SceneReadySignal({ sceneId }: { sceneId: SceneId }) {
     let cancelled = false;
     let frame = 0;
 
-    gl.compileAsync(scene, camera)
-      .catch(() => undefined) // falha de pré-compilação não deve travar o boot
-      .finally(() => {
-        if (cancelled) return;
-        frame = requestAnimationFrame(() => {
-          if (!cancelled) useAppStore.getState().setLoaded(true);
-        });
+    // Compila para a pipeline em uso (tela ou render target do bloom).
+    compileForPipeline(gl, scene, camera).finally(() => {
+      if (cancelled) return;
+      frame = requestAnimationFrame(() => {
+        if (!cancelled) useAppStore.getState().setLoaded(true);
       });
+    });
 
     return () => {
       cancelled = true;

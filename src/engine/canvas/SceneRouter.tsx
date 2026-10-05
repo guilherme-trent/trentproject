@@ -1,6 +1,7 @@
 'use client';
 
 import { Suspense, useEffect } from 'react';
+import { useThree } from '@react-three/fiber';
 import { SCENES } from '@/scenes/registry';
 import { useAppStore } from '../store/useAppStore';
 import { useCleanup } from '../hooks/useCleanup';
@@ -22,16 +23,20 @@ export function SceneRouter() {
 
   useCleanup();
 
-  // Com a cena atual pronta, antecipa as vizinhas: assets (manifest) +
-  // chunk JS + prepare(). Falhas aqui são silenciosas de propósito — a cena
-  // tenta de novo ao montar, e aí o erro aparece no lugar certo.
+  const get = useThree((state) => state.get);
+
+  // Com a cena atual pronta, antecipa as vizinhas: assets (manifest) + chunk JS
+  // + prepare() + warmup de GPU (shaders compilados, buffers residentes).
+  // Falhas aqui são silenciosas de propósito — a cena tenta de novo ao montar,
+  // e aí o erro aparece no lugar certo.
   useEffect(() => {
     if (!isLoaded) return;
     for (const next of SCENE_MANIFEST[currentScene].next) {
       preloadScene(next);
-      SCENES[next]?.preload().catch(() => undefined);
+      const { gl, camera, size } = get();
+      SCENES[next]?.warmup({ gl, camera, aspect: size.width / size.height }).catch(() => undefined);
     }
-  }, [currentScene, isLoaded]);
+  }, [currentScene, isLoaded, get]);
 
   const ActiveScene = SCENES[currentScene]?.Component;
 

@@ -30,3 +30,8 @@ export function int(value: number): string {
   if (!Number.isInteger(value)) throw new Error(`GLSL int inválido: ${value}`);
   return String(value);
 }
+
+/** Formata uma cor/vetor RGB como literal `vec3` GLSL. */
+export function vec3(value: readonly [number, number, number]): string {
+  return `vec3(${value.map(float).join(', ')})`;
+}

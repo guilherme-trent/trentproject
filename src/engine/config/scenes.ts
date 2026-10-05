@@ -8,7 +8,7 @@
  *   3. Tipagem  — `SceneId` é derivado daqui, então o store nunca aceita uma cena inexistente.
  */
 
-export const SCENE_IDS = ['boot', 'intro', 'hub', 'node_architecture'] as const;
+export const SCENE_IDS = ['boot', 'intro', 'hub', 'realm_architecture'] as const;
 
 export type SceneId = (typeof SCENE_IDS)[number];
 
@@ -24,6 +24,6 @@ export interface SceneManifest {
 export const SCENE_MANIFEST: Record<SceneId, SceneManifest> = {
   boot: { gltf: [], textures: [], next: ['intro'] },
   intro: { gltf: [], textures: [], next: ['hub'] },
-  hub: { gltf: [], textures: [], next: ['node_architecture'] },
-  node_architecture: { gltf: [], textures: [], next: ['hub'] },
+  hub: { gltf: [], textures: [], next: ['realm_architecture'] },
+  realm_architecture: { gltf: [], textures: [], next: ['hub'] },
 };

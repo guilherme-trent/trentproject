@@ -1,19 +1,33 @@
 import { useAppStore } from './store/useAppStore';
 import { unlockAudio } from './audio/audioEngine';
 
+let igniting = false;
+
+/** Executa `task` depois que o navegador pintar o próximo frame (rAF → macrotask). */
+function afterNextPaint(task: () => void) {
+  requestAnimationFrame(() => setTimeout(task, 0));
+}
+
 /**
  * A Ignição: o único ponto de entrada da experiência.
  *
- * Precisa rodar SÍNCRONA dentro do gesto do usuário (por causa do áudio).
- * É idempotente: toques duplos ou repetidos são ignorados fora da cena 'boot'.
+ * Divide o trabalho em dois tempos:
+ *   1. DENTRO do gesto (síncrono): desbloquear o áudio — o Safari recusa
+ *      AudioContext.resume() fora de um gesto do usuário.
+ *   2. DEPOIS do próximo paint: trocar de cena. Montar a intro custava ~130ms
+ *      dentro do handler de clique (medido via Long Animation Frames API), o
+ *      que segurava o próximo paint (INP ruim). Agora o handler retorna em
+ *      poucos ms, o navegador pinta, e só então a intro é montada.
  *
- * O fade-out do botão não é comandado aqui: a UI é derivada do store, então
- * ao sair de 'boot' o AnimatePresence do UIOverlay anima a saída sozinho.
+ * Idempotente: toques repetidos durante a ignição são ignorados.
  */
 export function ignite() {
-  const { currentScene, setScene } = useAppStore.getState();
-  if (currentScene !== 'boot') return;
+  if (igniting || useAppStore.getState().currentScene !== 'boot') return;
+  igniting = true;
 
   unlockAudio();
-  setScene('intro');
+  afterNextPaint(() => {
+    useAppStore.getState().setScene('intro');
+    igniting = false;
+  });
 }
