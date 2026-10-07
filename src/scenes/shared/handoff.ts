@@ -13,3 +13,17 @@ export const BEAM_HANDOFF = {
   headY: -0.6,
   intensity: 1,
 } as const;
+
+
+/**
+ * Contrato de continuidade "volta pela luz": um reino que termina num clarão
+ * (ex.: o pilar do Monólito) marca `fromLight` antes de trocar de cena, e a
+ * hub nasce do mesmo branco, dissolvendo-o. A hub zera a marca ao consumi-la.
+ */
+export const RETURN_HANDOFF = { fromLight: false };
+
+/**
+ * Contrato do "sequestro" (hub → Architecture): a mão de matéria escura cobre
+ * a câmera e a tela fica preta por 1s; o reino nasce desse mesmo preto.
+ */
+export const KIDNAP_HANDOFF = { fromBlack: false };

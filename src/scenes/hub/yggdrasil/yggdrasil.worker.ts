@@ -8,6 +8,6 @@ import { generateYggdrasil } from './generator';
 self.onmessage = (event: MessageEvent<{ threadCount: number }>) => {
   const data = generateYggdrasil(event.data.threadCount);
   self.postMessage(data, {
-    transfer: [data.positions.buffer, data.thread.buffer, data.index.buffer, data.nexus.buffer],
+    transfer: [data.positions.buffer, data.thread.buffer, data.index.buffer, data.mainBranches.buffer, data.mainBranchRegions.buffer],
   });
 };

@@ -9,9 +9,10 @@ import { clampDelta, smoothstep } from '@/engine/lib/time';
 import type { YggdrasilData } from './yggdrasil/generator';
 import { treeDrawCount, type HubKit } from './kit';
 import type { HubDirector } from './director';
+import { BASE_YAW, SWING } from './fruits/layout';
 
-/** Rotação autônoma (rad/s) — em torno de Y, que preserva o eixo do feixe. */
-const ROTATION_SPEED = 0.04;
+/** Fase do balanço da árvore (ver fruits/layout.ts: BASE_YAW e SWING). */
+const SWING_SPEED = 0.07; // rad/s da fase do balanço (~90s por ciclo)
 /** Inclinação máxima (rad) que o pointer imprime na árvore. */
 const POINTER_TILT = { x: 0.12, z: 0.05 } as const;
 
@@ -34,6 +35,7 @@ interface YggdrasilTreeProps {
  */
 export function YggdrasilTree({ kit, data, director, children }: YggdrasilTreeProps) {
   const group = useRef<Group>(null);
+  const swingPhase = useRef(0);
 
   useEffect(() => {
     const geometry = kit.tree.geometry;
@@ -47,18 +49,19 @@ export function YggdrasilTree({ kit, data, director, children }: YggdrasilTreePr
     const root = group.current;
     if (!root) return;
     const dt = clampDelta(delta);
-    // Durante o mergulho a árvore congela: o alvo da câmera não pode fugir.
-    if (director.dive) return;
+    // Durante uma transição a árvore congela: o fruto-alvo não pode fugir.
+    if (director.transition) return;
 
-    root.rotation.y += dt * ROTATION_SPEED;
+    swingPhase.current += dt * SWING_SPEED;
+    root.rotation.y = BASE_YAW + Math.sin(swingPhase.current) * SWING;
     // A inclinação só entra depois do crescimento: antes, desalinharia a árvore do feixe.
     const influence = smoothstep(0.7, 1, director.growth);
     root.rotation.x = MathUtils.damp(root.rotation.x, -pointer.y * POINTER_TILT.x * influence, 2, dt);
     root.rotation.z = MathUtils.damp(root.rotation.z, pointer.x * POINTER_TILT.z * influence, 2, dt);
-  });
+  }, -0.5); // antes dos frutos (0), que dependem da posição de mundo final dos galhos
 
   return (
-    <group ref={group}>
+    <group ref={group} rotation-y={BASE_YAW}>
       <lineSegments geometry={kit.tree.geometry} material={kit.tree.material} frustumCulled={false} />
       {children}
     </group>

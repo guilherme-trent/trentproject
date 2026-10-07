@@ -122,27 +122,70 @@ export interface QualityBudget {
 export const qualityRank = ({ performanceTier, dpr }: QualityBudget) =>
   PERFORMANCE_TIERS.indexOf(performanceTier) * 10 + dpr;
 
-/** Melhoria em cascata: recupera resolução primeiro, features depois. */
-export function upgradeStep({ performanceTier, dpr }: QualityBudget): QualityBudget | null {
+/**
+ * Melhoria em cascata: recupera resolução primeiro, features depois — nunca
+ * acima de `maxTier` (o teto da classe de GPU). Sob vsync, FPS cravado em 60
+ * não prova que sobra GPU para um salto de tier (medido: uma Intel UHD estável
+ * em 'mid' "conquistou" 'high' e voltou a engasgar).
+ */
+export function upgradeStep(
+  { performanceTier, dpr }: QualityBudget,
+  maxTier: PerformanceTier = 'high',
+): QualityBudget | null {
   const nextDpr = stepDpr(performanceTier, dpr, 1);
   if (nextDpr !== null) return { performanceTier, dpr: nextDpr };
   const higher = stepTier(performanceTier, 1);
-  return higher ? { performanceTier: higher, dpr: clampDpr(higher, dpr) } : null;
+  if (!higher || PERFORMANCE_TIERS.indexOf(higher) > PERFORMANCE_TIERS.indexOf(maxTier)) return null;
+  return { performanceTier: higher, dpr: clampDpr(higher, dpr) };
 }
 
-/** Queda em cascata: sacrifica resolução primeiro, features só quando o DPR bate no piso. */
-export function degradeStep({ performanceTier, dpr }: QualityBudget): QualityBudget | null {
+/**
+ * Piso de direção de arte: abaixo disto o motor NÃO degrada em runtime.
+ *   - tier 'mid': mantém o bloom (sem ele a árvore perde o branco e muda de cor);
+ *   - DPR 1.0: abaixo da resolução nativa, linhas de 1px borram e serrilham.
+ * Decisão de produto: 45 fps bonitos > 60 fps com a direção de arte destruída.
+ * Só um palpite inicial 'low' (GPU por software, aparelho muito fraco) rebaixa o piso.
+ */
+export const ART_DIRECTION_FLOOR: QualityBudget = { performanceTier: 'mid', dpr: 1 };
+
+/** O piso efetivo: o de arte, rebaixado apenas se o dispositivo começou abaixo dele. */
+export function floorFor(startTier: PerformanceTier): QualityBudget {
+  const floorTier = PERFORMANCE_TIERS.indexOf(startTier) < PERFORMANCE_TIERS.indexOf(ART_DIRECTION_FLOOR.performanceTier)
+    ? startTier
+    : ART_DIRECTION_FLOOR.performanceTier;
+  return { performanceTier: floorTier, dpr: clampDpr(floorTier, ART_DIRECTION_FLOOR.dpr) };
+}
+
+/** `budget` respeita o piso? Tier não pode cair abaixo dele; DPR também não (até onde o tier permite). */
+function respectsFloor(budget: QualityBudget, floor: QualityBudget): boolean {
+  const tierOk = PERFORMANCE_TIERS.indexOf(budget.performanceTier) >= PERFORMANCE_TIERS.indexOf(floor.performanceTier);
+  const dprFloor = Math.min(floor.dpr, getDprBounds(budget.performanceTier)[1]);
+  return tierOk && budget.dpr >= dprFloor - EPSILON;
+}
+
+/**
+ * Queda em cascata: sacrifica resolução primeiro, features depois — o
+ * primeiro candidato que respeita o piso vence; nenhum = já estamos no piso.
+ */
+export function degradeStep({ performanceTier, dpr }: QualityBudget, floor: QualityBudget): QualityBudget | null {
+  const candidates: QualityBudget[] = [];
   const nextDpr = stepDpr(performanceTier, dpr, -1);
-  if (nextDpr !== null) return { performanceTier, dpr: nextDpr };
+  if (nextDpr !== null) candidates.push({ performanceTier, dpr: nextDpr });
   const lower = stepTier(performanceTier, -1);
-  return lower ? { performanceTier: lower, dpr: clampDpr(lower, dpr) } : null;
+  if (lower) candidates.push({ performanceTier: lower, dpr: clampDpr(lower, dpr) });
+  return candidates.find((candidate) => respectsFloor(candidate, floor)) ?? null;
 }
 
 /** Aplica até `steps` melhorias, parando antes de alcançar o teto (exclusivo). */
-export function upgradeWithin(budget: QualityBudget, steps: number, ceiling = Infinity): QualityBudget {
+export function upgradeWithin(
+  budget: QualityBudget,
+  steps: number,
+  ceiling = Infinity,
+  maxTier: PerformanceTier = 'high',
+): QualityBudget {
   let current = budget;
   for (let i = 0; i < steps; i++) {
-    const next = upgradeStep(current);
+    const next = upgradeStep(current, maxTier);
     if (!next || qualityRank(next) >= ceiling) break;
     current = next;
   }

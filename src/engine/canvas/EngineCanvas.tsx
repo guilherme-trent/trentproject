@@ -7,7 +7,7 @@ import { detectInitialTier, tierCapFromRenderer } from '../config/performance';
 import { PerformanceGovernor } from './PerformanceGovernor';
 import { SceneRouter } from './SceneRouter';
 import { PostFX } from './PostFX';
-import { installEngineDebug } from '../debug';
+import { installEngineDebug, registerDebug } from '../debug';
 
 /**
  * O <Canvas> do motor. Carregado apenas no cliente (ver CanvasLayer) — three.js
@@ -52,6 +52,7 @@ export function EngineCanvas() {
         const info = context.getExtension('WEBGL_debug_renderer_info');
         const renderer = String(context.getParameter(info ? info.UNMASKED_RENDERER_WEBGL : context.RENDERER));
         useAppStore.getState().capTier(tierCapFromRenderer(renderer));
+        registerDebug('renderer', gl); // dev/?engine-debug: inspeção de gl.info (memória, draw calls)
       }}
     >
       <PerformanceGovernor />

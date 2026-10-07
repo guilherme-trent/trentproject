@@ -10,4 +10,6 @@ export const SCENES: Partial<Record<SceneId, SceneDefinition>> = {
   intro: defineScene(() => import('./intro/IntroScene')),
   hub: defineScene(() => import('./hub/HubScene')),
   realm_architecture: defineScene(() => import('./realm-architecture/ArchitectureScene')),
+  realm_performance: defineScene(() => import('./realm-performance/PerformanceScene')),
+  realm_experience: defineScene(() => import('./realm-experience/ExperienceScene')),
 };

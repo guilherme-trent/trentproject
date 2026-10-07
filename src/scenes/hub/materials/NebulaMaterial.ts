@@ -1,11 +1,14 @@
 import { HalfFloatType, LinearFilter, ShaderMaterial, Vector2, WebGLRenderTarget, type Texture } from 'three';
-import { glsl, vec3 } from '@/shaders/glsl';
+import { float, glsl, vec3 } from '@/shaders/glsl';
 import { FULLSCREEN_VERTEX, SCREEN_SPACE_CHUNK } from '@/shaders/fullscreen';
 import { simplexChunk } from '@/shaders/chunks/simplex.glsl';
 import { commonChunk } from '@/shaders/chunks/common.glsl';
 import type { PerformanceTier } from '@/engine/config/performance';
 import { PALETTE } from '../../shared/palette';
 import type { HubUniforms } from '../uniforms';
+
+/** Fração do crescimento da árvore em que a nebulosa termina de surgir. */
+const NEBULA_FADE_END = 0.75;
 
 /** Oitavas de fBm por tier: o custo da nebulosa é quase todo aqui (fragment de tela cheia). */
 const OCTAVES: Record<PerformanceTier, number> = { high: 3, mid: 2, low: 1 };
@@ -31,12 +34,17 @@ const OCTAVES: Record<PerformanceTier, number> = { high: 3, mid: 2, low: 1 };
  *
  * Paralaxe: o fundo desliza levemente com a câmera (`uOffset`), dando
  * profundidade sem nenhuma geometria.
+ *
+ * Fade-in: a opacidade acompanha o crescimento da árvore (`uGrowth`,
+ * compartilhado) — a fumaça surge com o nascimento dela, não de uma vez após
+ * a onda de choque. Voltando de um reino, `uGrowth` já é 1: sem fade.
  */
 const fragmentShader = glsl`
 uniform float uTime;
 uniform float uAspect;
 uniform vec2 uOffset;
-uniform float uDive;
+uniform float uWarp;
+uniform float uGrowth;
 
 varying vec2 vUv;
 
@@ -80,7 +88,10 @@ void main() {
   vec3 color = tint * density * (0.1 + 0.35 * treeGlow) + ${vec3(PALETTE.emerald)} * 0.05 * treeGlow;
 
   // Saída linear crua: tone mapping e sRGB acontecem na composição (resolução cheia).
-  gl_FragColor = vec4(color * (1.0 - uDive), 1.0);
+  // Atinge 1 em ~75% do crescimento (≈2.5s); o quadrado alonga o início no escuro.
+  float fadeIn = smoothstep(0.0, ${float(NEBULA_FADE_END)}, uGrowth);
+  fadeIn *= fadeIn;
+  gl_FragColor = vec4(color * fadeIn * (1.0 - uWarp), 1.0);
 }
 `;
 
@@ -134,7 +145,8 @@ export class NebulaMaterial extends ShaderMaterial {
       defines: { NEBULA_OCTAVES: OCTAVES[tier] },
       uniforms: {
         uTime: shared.uTime,
-        uDive: shared.uDive,
+        uWarp: shared.uWarp,
+        uGrowth: shared.uGrowth,
         uAspect: { value: 1 },
         uOffset: { value: new Vector2() },
       },

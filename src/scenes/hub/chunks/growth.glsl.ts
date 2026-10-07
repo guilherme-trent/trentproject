@@ -21,6 +21,13 @@ export const GROWTH = {
 /** `uGrowth` é normalizado: 1 = último vértice pousado. */
 const GROWTH_END = GROWTH.spread + GROWTH.jitter + GROWTH.ramp;
 
+/**
+ * Valor de `uGrowth` em que TODO vértice de alcance ≤ `reach` já pousou —
+ * a mesma conta do shader, na CPU (ex.: o fruto desabrocha no instante em
+ * que o último fio do seu caule termina de crescer).
+ */
+export const growthLandedAt = (reach: number) => (reach * GROWTH.spread + GROWTH.jitter + GROWTH.ramp) / GROWTH_END;
+
 export const growthChunk = glsl`
 ${commonChunk}
 #ifndef CHUNK_GROWTH

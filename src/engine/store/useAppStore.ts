@@ -2,7 +2,9 @@ import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
 import type { SceneId } from '../config/scenes';
 import {
+  ART_DIRECTION_FLOOR,
   degradeStep,
+  floorFor,
   getDprBounds,
   getInitialDpr,
   PERFORMANCE_TIERS,
@@ -32,6 +34,11 @@ export interface AppState {
   previousScene: SceneId | null;
   /** Assets da cena atual resolvidos + shaders compilados + primeiro frame pintado. */
   isLoaded: boolean;
+  /**
+   * Marco narrativo da cena atual (ex.: 'luma' no reino Architecture). A UI
+   * reage a ele sem conhecer a cena. Zerado a cada troca de cena.
+   */
+  sceneBeat: string | null;
 
   // ── Performance ─────────────────────────────────────────────────────────
   performanceTier: PerformanceTier;
@@ -49,6 +56,10 @@ export interface AppState {
   pendingUpgrades: number;
   /** Orçamento aprendido por cena, retomado a cada visita. */
   sceneBudgets: Partial<Record<SceneId, QualityBudget>>;
+  /** Teto de tier da classe de GPU (ver tierCapFromRenderer): vale também para melhorias. */
+  maxTier: PerformanceTier;
+  /** Abaixo disto o motor não degrada (direção de arte). Ver ART_DIRECTION_FLOOR. */
+  qualityFloor: QualityBudget;
   /** Por cena: o rank de qualidade em que ela já engasgou (limite exclusivo para melhorias). */
   sceneCeilings: Partial<Record<SceneId, number>>;
 
@@ -59,6 +70,7 @@ export interface AppState {
   // ── Ações ───────────────────────────────────────────────────────────────
   setScene: (scene: SceneId) => void;
   setLoaded: (loaded: boolean) => void;
+  setSceneBeat: (beat: string | null) => void;
   hydratePerformance: (tier: PerformanceTier) => void;
   /** Rebaixa o tier se ele estiver acima do teto indicado (ex.: pela GPU detectada). */
   capTier: (cap: PerformanceTier) => void;
@@ -79,6 +91,7 @@ export const useAppStore = create<AppState>()(
     currentScene: 'boot',
     previousScene: null,
     isLoaded: false,
+    sceneBeat: null,
 
     performanceTier: 'mid',
     dpr: 1,
@@ -87,6 +100,8 @@ export const useAppStore = create<AppState>()(
     pendingUpgrades: 0,
     sceneBudgets: {},
     sceneCeilings: {},
+    qualityFloor: ART_DIRECTION_FLOOR,
+    maxTier: 'high',
 
     audioState: 'locked',
 
@@ -104,7 +119,7 @@ export const useAppStore = create<AppState>()(
 
         const leaving = state.isPerformanceLocked
           ? budgetOf(state)
-          : upgradeWithin(budgetOf(state), state.pendingUpgrades, state.sceneCeilings[state.currentScene]);
+          : upgradeWithin(budgetOf(state), state.pendingUpgrades, state.sceneCeilings[state.currentScene], state.maxTier);
         const entering = state.isPerformanceLocked ? budgetOf(state) : (state.sceneBudgets[scene] ?? budgetOf(state));
 
         return {
@@ -113,6 +128,7 @@ export const useAppStore = create<AppState>()(
           // Toda troca de cena reabre o ciclo de carregamento; o
           // SceneReadySignal da nova cena devolve `true` quando ela estiver pronta.
           isLoaded: false,
+          sceneBeat: null,
           ...entering,
           pendingUpgrades: 0,
           sceneBudgets: { ...state.sceneBudgets, [state.currentScene]: leaving },
@@ -120,19 +136,28 @@ export const useAppStore = create<AppState>()(
       }),
 
     setLoaded: (loaded) => set({ isLoaded: loaded }),
+    setSceneBeat: (sceneBeat) => set((state) => (state.sceneBeat === sceneBeat ? state : { sceneBeat })),
 
     // Idempotente: o StrictMode executa effects duas vezes em dev.
     hydratePerformance: (tier) =>
       set((state) =>
         state.isPerformanceHydrated
           ? state
-          : { performanceTier: tier, dpr: getInitialDpr(tier), isPerformanceHydrated: true },
+          : {
+              performanceTier: tier,
+              dpr: getInitialDpr(tier),
+              qualityFloor: floorFor(tier),
+              isPerformanceHydrated: true,
+            },
       ),
 
     capTier: (cap) =>
       set((state) => {
-        if (PERFORMANCE_TIERS.indexOf(state.performanceTier) <= PERFORMANCE_TIERS.indexOf(cap)) return state;
-        return { performanceTier: cap, dpr: getInitialDpr(cap) };
+        if (PERFORMANCE_TIERS.indexOf(state.performanceTier) <= PERFORMANCE_TIERS.indexOf(cap)) {
+          return state.maxTier === cap ? state : { maxTier: cap };
+        }
+        // O teto vale para o início E para melhorias futuras; o piso só desce se o teto ficar abaixo dele.
+        return { performanceTier: cap, dpr: getInitialDpr(cap), qualityFloor: floorFor(cap), maxTier: cap };
       }),
 
     /**
@@ -143,7 +168,7 @@ export const useAppStore = create<AppState>()(
     degradePerformance: () =>
       set((state) => {
         if (state.isPerformanceLocked) return state;
-        const next = degradeStep(budgetOf(state));
+        const next = degradeStep(budgetOf(state), state.qualityFloor);
         if (!next) return state.pendingUpgrades ? { pendingUpgrades: 0 } : state;
 
         const failed = qualityRank(budgetOf(state));
@@ -159,16 +184,18 @@ export const useAppStore = create<AppState>()(
     queueUpgrade: () =>
       set((state) => {
         if (state.isPerformanceLocked || state.pendingUpgrades >= MAX_PENDING_UPGRADES) return state;
-        const target = upgradeWithin(budgetOf(state), state.pendingUpgrades + 1, state.sceneCeilings[state.currentScene]);
-        const reachable = qualityRank(target) > qualityRank(upgradeWithin(budgetOf(state), state.pendingUpgrades));
+        const ceiling = state.sceneCeilings[state.currentScene];
+        const target = upgradeWithin(budgetOf(state), state.pendingUpgrades + 1, ceiling, state.maxTier);
+        const reachable =
+          qualityRank(target) > qualityRank(upgradeWithin(budgetOf(state), state.pendingUpgrades, ceiling, state.maxTier));
         return reachable ? { pendingUpgrades: state.pendingUpgrades + 1 } : state;
       }),
 
-    /** Congela no piso do tier atual: estabilidade > fidelidade quando há oscilação. */
+    /** Congela no piso do tier atual (respeitando o piso de arte): estabilidade > fidelidade. */
     lockPerformance: () =>
       set((state) => ({
         isPerformanceLocked: true,
-        dpr: getDprBounds(state.performanceTier)[0],
+        dpr: Math.max(getDprBounds(state.performanceTier)[0], Math.min(state.dpr, state.qualityFloor.dpr)),
         pendingUpgrades: 0,
       })),
 

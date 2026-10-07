@@ -16,8 +16,9 @@
  *
  * SAÍDA — formato final da GPU (typed arrays transferíveis):
  *   position  vec3 por vértice
- *   aThread   vec3 por vértice: (semente do fio, t ao longo do fio 0→1,
- *             região assinada: −1 ponta da raiz … 0 meio do tronco … +1 ponta do galho)
+ *   aThread   vec4 por vértice: (semente do fio, t ao longo do fio 0→1,
+ *             região assinada: −1 ponta da raiz … 0 meio do tronco … +1 ponta do galho,
+ *             índice do galho principal da copa por onde o fio sobe)
  *   index     pares (k, k+1) → LineSegments indexado: 1 draw call para tudo.
  *
  * Os fios saem em ordem aleatória: qualquer prefixo é uma amostra uniforme da
@@ -53,17 +54,23 @@ export const YGGDRASIL = {
   },
 } as const;
 
-/** Índices (entre os galhos principais) que recebem os Nexus Points — ~120° entre si. */
-const NEXUS_BRANCHES = [0, 2, 5] as const;
-
 export interface YggdrasilData {
   threadCount: number;
   samplesPerThread: number;
   positions: Float32Array;
   thread: Float32Array;
   index: Uint32Array;
-  /** Posições (espaço local da árvore) dos 3 Nexus Points, xyz concatenados. */
-  nexus: Float32Array;
+  /**
+   * Forquilhas (pontas) dos galhos principais da copa, espaço local da árvore,
+   * xyz concatenados. Fatos do esqueleto: quem decide o que se prende a eles
+   * (ex.: os Frutos, ver fruits/layout.ts) é a cena.
+   */
+  mainBranches: Float32Array;
+  /**
+   * Região média (ver aThread.z) na forquilha de cada galho principal: onde o
+   * pulso de luz que sobe por um galho chega ao ponto do caule de um fruto.
+   */
+  mainBranchRegions: Float32Array;
   bounds: { min: [number, number, number]; max: [number, number, number] };
 }
 
@@ -108,6 +115,8 @@ function rotate(v: Vec3, axis: Vec3, angle: number): Vec3 {
 interface LimbPath {
   points: Vec3[];
   radii: number[];
+  /** Galho principal (nível 0) de onde este caminho saiu. */
+  main: number;
 }
 
 interface LimbSystem {
@@ -122,7 +131,7 @@ function growLimbs(
   origin: Vec3,
   originRadius: number,
   rng: () => number,
-  onMainBranchEnd?: (index: number, end: Vec3) => void,
+  onMainBranch?: (index: number, start: Vec3, mid: Vec3, end: Vec3) => void,
 ): LimbPath[] {
   const leaves: LimbPath[] = [];
 
@@ -139,8 +148,9 @@ function growLimbs(
     const extended: LimbPath = {
       points: [...path.points, mid, end],
       radii: [...path.radii, (spec.radius + nextRadius) / 2, nextRadius],
+      main: mainIndex,
     };
-    if (level === 0) onMainBranchEnd?.(mainIndex, end);
+    if (level === 0) onMainBranch?.(mainIndex, start, mid, end);
     if (isLeaf) {
       leaves.push(extended);
       return;
@@ -162,7 +172,7 @@ function growLimbs(
       Math.sin(elevation),
       Math.sin(azimuth) * Math.cos(elevation),
     ];
-    grow(origin, direction, 0, { points: [origin], radii: [originRadius] }, b);
+    grow(origin, direction, 0, { points: [origin], radii: [originRadius], main: b }, b);
   }
   return leaves;
 }
@@ -235,11 +245,10 @@ export function generateYggdrasil(threadCount: number = YGGDRASIL.threads): Yggd
   const trunkTop: Vec3 = [0, trunk.topY, 0];
   const trunkBase: Vec3 = [0, trunk.baseY, 0];
 
-  const nexus = new Float32Array(NEXUS_BRANCHES.length * 3);
-  const canopy = growLimbs(YGGDRASIL.canopy, trunkTop, trunk.radiusTop, rng, (index, end) => {
-    const slot = NEXUS_BRANCHES.indexOf(index as (typeof NEXUS_BRANCHES)[number]);
-    if (slot >= 0) nexus.set(end, slot * 3);
-  });
+  const mainBranches = new Float32Array(YGGDRASIL.canopy.branches * 3);
+  const canopy = growLimbs(YGGDRASIL.canopy, trunkTop, trunk.radiusTop, rng, (index, _start, _mid, end) =>
+    mainBranches.set(end, index * 3),
+  );
   const roots = growLimbs(YGGDRASIL.roots, trunkBase, trunk.radiusBase, rng);
 
   // Pontos interiores do tronco: o meio do caminho de todo fio é idêntico.
@@ -254,7 +263,9 @@ export function generateYggdrasil(threadCount: number = YGGDRASIL.threads): Yggd
 
   const vertexCount = threadCount * samples;
   const positions = new Float32Array(vertexCount * 3);
-  const thread = new Float32Array(vertexCount * 3);
+  const thread = new Float32Array(vertexCount * 4);
+  const forkRegionSum = new Float64Array(YGGDRASIL.canopy.branches);
+  const forkRegionCount = new Uint32Array(YGGDRASIL.canopy.branches);
   const index = new Uint32Array(threadCount * (samples - 1) * 2);
   const min: Vec3 = [Infinity, Infinity, Infinity];
   const max: Vec3 = [-Infinity, -Infinity, -Infinity];
@@ -288,6 +299,21 @@ export function generateYggdrasil(threadCount: number = YGGDRASIL.threads): Yggd
     const phase0 = rng() * Math.PI * 2;
     const weave = rng() * 10;
 
+    // Região na forquilha do galho principal deste fio (média por galho, ver mainBranchRegions).
+    const fork: Vec3 = [mainBranches[branch.main * 3], mainBranches[branch.main * 3 + 1], mainBranches[branch.main * 3 + 2]];
+    let forkK = samples - 1;
+    let forkDistance = Infinity;
+    for (let k = 0; k < samples; k++) {
+      const distance = length(sub(curve.centers[k], fork));
+      if (distance < forkDistance) {
+        forkDistance = distance;
+        forkK = k;
+      }
+    }
+    const forkRegion = (curve.arc[forkK] - trunkMidArc) / (curve.total - trunkMidArc || 1);
+    forkRegionSum[branch.main] += forkRegion;
+    forkRegionCount[branch.main]++;
+
     // Referencial que acompanha a curva (transporte paralelo aproximado).
     let normal: Vec3 = [0, 0, 0];
     const base = f * samples;
@@ -314,9 +340,11 @@ export function generateYggdrasil(threadCount: number = YGGDRASIL.threads): Yggd
 
       const region =
         s < trunkMidArc ? -(trunkMidArc - s) / (trunkMidArc || 1) : (s - trunkMidArc) / (curve.total - trunkMidArc || 1);
-      thread[v] = seed;
-      thread[v + 1] = k / (samples - 1);
-      thread[v + 2] = region;
+      const w = (base + k) * 4;
+      thread[w] = seed;
+      thread[w + 1] = k / (samples - 1);
+      thread[w + 2] = region;
+      thread[w + 3] = branch.main;
 
       if (k < samples - 1) {
         const e = (f * (samples - 1) + k) * 2;
@@ -332,7 +360,8 @@ export function generateYggdrasil(threadCount: number = YGGDRASIL.threads): Yggd
     positions,
     thread,
     index,
-    nexus,
+    mainBranches,
+    mainBranchRegions: Float32Array.from(forkRegionSum, (sum, b) => sum / Math.max(1, forkRegionCount[b])),
     bounds: { min, max },
   };
 }

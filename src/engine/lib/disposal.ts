@@ -48,7 +48,14 @@ function addMaterial(material: Material, out: Set<Disposable>) {
 
   // Varre TODAS as propriedades (map, normalMap, roughnessMap, alphaMap, …)
   // em vez de uma lista fixa: cobre materiais custom e futuras versões do three.
-  for (const value of Object.values(material)) addTextureLike(value, out);
+  // Também desembrulha campos no formato uniform `{ value: Texture }`: materiais
+  // de terceiros (ex.: MeshReflectorMaterial do drei) guardam texturas assim,
+  // em campos privados — medido: o mapa de distorção do chão da Forja vazava
+  // 1 textura por visita ao reino.
+  for (const value of Object.values(material)) {
+    addTextureLike(value, out);
+    if (value && typeof value === 'object' && 'value' in value) addTextureLike((value as { value: unknown }).value, out);
+  }
 
   // ShaderMaterial / RawShaderMaterial / onBeforeCompile: texturas vivem em uniforms.
   const uniforms = (material as Material & { uniforms?: Record<string, { value: unknown }> })
