@@ -16,14 +16,17 @@ export const BEAM_HANDOFF = {
 
 
 /**
- * Contrato de continuidade "volta pela luz": um reino que termina num clarão
- * (ex.: o pilar do Monólito) marca `fromLight` antes de trocar de cena, e a
- * hub nasce do mesmo branco, dissolvendo-o. A hub zera a marca ao consumi-la.
+ * Contrato da volta "pelo pulso": um reino que termina com o pulso de luz
+ * cobrindo a tela (ver PulseWipeMaterial) marca `fromPulse` antes de trocar
+ * de cena, e a hub nasce do mesmo escuro, revelada pelo pulso no sentido
+ * inverso. A hub zera a marca ao consumi-la.
  */
-export const RETURN_HANDOFF = { fromLight: false };
+export const RETURN_HANDOFF = { fromPulse: false };
 
 /**
- * Contrato do "sequestro" (hub → Architecture): a mão de matéria escura cobre
- * a câmera e a tela fica preta por 1s; o reino nasce desse mesmo preto.
+ * Contrato da ruptura (hub → Architecture): pela fissura do fruto 1 já se vê
+ * a Fase 1 ao vivo (RiftPreview). Quando o rasgo cobre a tela, o reino
+ * CONTINUA dali: mesmo progresso da construção, mesmo relógio (o hangar que
+ * já acendeu continua aceso). O reino zera a marca ao consumi-la.
  */
-export const KIDNAP_HANDOFF = { fromBlack: false };
+export const RIFT_HANDOFF = { fromRift: false, progress: 0, time: 0 };

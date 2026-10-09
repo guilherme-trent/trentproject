@@ -42,11 +42,23 @@ const BLOOM_SECONDS = 0.7;
 const easeOutBack = (x: number) => 1 + 2.2 * (x - 1) ** 3 + 1.2 * (x - 1) ** 2;
 
 /**
- * O sequestro (s desde o início): a anomalia emerge do fruto, avança contra a
- * câmera acelerando, os dedos se fecham sobre ela, e a tela fica PRETA por 1s
- * antes da troca de cena.
+ * A ruptura do fruto 1 (s desde o início):
+ *   crack    o fruto TRINCA — uma linha de luz o atravessa e o suga;
+ *   rise     o rasgo estica SÓ na vertical, rápido, até passar do topo e da base da tela;
+ *   tension  esticado e fino, treme — o tecido do espaço resiste;
+ *   pull     escancara na HORIZONTAL, como duas mãos invisíveis puxando, até engolir a câmera.
+ * Pela fenda já se vê a Fase 1 ao vivo (o hangar acendendo, a cidade começando a se
+ * desenhar); quando ela cobre a tela, o reino continua daquele quadro.
+ * `flood` só existe como reserva (sem a prévia, o outro lado se enche de luz).
  */
-export const KIDNAP = { emerge: 0.55, lunge: [0.55, 1.35] as const, grip: [1.05, 1.4] as const, black: [1.2, 1.38] as const, end: 2.4 };
+export const RIFT = {
+  crack: [0, 0.55] as const,
+  rise: [0.45, 0.95] as const,
+  tension: [0.95, 1.4] as const,
+  pull: [1.4, 2.8] as const,
+  flood: [2.2, 2.9] as const,
+  end: 2.95,
+};
 
 interface Awakening {
   fruit: number;
@@ -95,9 +107,9 @@ export class HubDirector {
   private readonly hoverTarget = [0, 0, 0];
   private onBreak: ((fruit: number) => void) | null = null;
   private bloomClock = 0;
-  /** Segundos desde o início do sequestro (−1 = não começou). */
-  kidnapClock = -1;
-  private kidnapDone = false;
+  /** Segundos desde o início da ruptura (−1 = não começou). */
+  riftClock = -1;
+  private riftDone = false;
 
   /**
    * @param fruitBranches  galho principal de cada fruto (na ordem de PILLARS)
@@ -142,10 +154,10 @@ export class HubDirector {
     return true;
   }
 
-  /** A anomalia leva o jogador para o reino do fruto 1 (ver KIDNAP). Idempotente. */
-  kidnap() {
-    if (this.kidnapClock >= 0 || this.transition) return false;
-    this.kidnapClock = 0;
+  /** O fruto 1 se rompe numa fissura que leva o jogador ao reino (ver RIFT). Idempotente. */
+  rupture() {
+    if (this.riftClock >= 0 || this.transition) return false;
+    this.riftClock = 0;
     return true;
   }
 
@@ -160,12 +172,16 @@ export class HubDirector {
    */
   tick(elapsedTime: number, delta: number): SceneId | null {
     this.uniforms.uTime.value = elapsedTime;
-    if (this.kidnapClock >= 0) {
-      this.kidnapClock += delta;
-      // O tranco da mão se fechando sobre a câmera.
-      if (this.kidnapClock > KIDNAP.lunge[1] - 0.15 && this.kidnapClock < KIDNAP.black[1]) this.shake = Math.max(this.shake, 0.7);
-      if (!this.kidnapDone && this.kidnapClock >= KIDNAP.end) {
-        this.kidnapDone = true;
+    if (this.riftClock >= 0) {
+      this.riftClock += delta;
+      // A trinca estala aos trancos; o rasgo abre num tranco forte e ronca enquanto se escancara.
+      const k = this.riftClock;
+      if (k < RIFT.crack[1]) this.shake = Math.max(this.shake, 0.25 * (Math.sin(k * 40) > 0.6 ? 1 : 0.3));
+      else if (k < RIFT.rise[1]) this.shake = Math.max(this.shake, 0.6); // o rasgo dispara
+      else if (k < RIFT.tension[1]) this.shake = Math.max(this.shake, 0.22 + 0.2 * Math.abs(Math.sin(k * 23))); // o tecido resiste
+      else if (k < RIFT.pull[1]) this.shake = Math.max(this.shake, 0.4); // o puxão
+      if (!this.riftDone && this.riftClock >= RIFT.end) {
+        this.riftDone = true;
         return 'realm_architecture';
       }
     }
@@ -199,7 +215,7 @@ export class HubDirector {
 
   /** Hover e clique só depois que a árvore brotou, e nunca durante uma transição, um despertar ou o sequestro. */
   get canInteract() {
-    return this.growth >= 1 && !this.transition && !this.awakening && this.kidnapClock < 0;
+    return this.growth >= 1 && !this.transition && !this.awakening && this.riftClock < 0;
   }
 
   /**

@@ -2,11 +2,11 @@ import { Color, Uniform, Vector2, type Camera, type WebGLRenderer, type WebGLRen
 import { Effect, EffectAttribute, EffectPass } from 'postprocessing';
 import { glsl } from '@/shaders/glsl';
 import { voronoiChunk } from '@/shaders/chunks/voronoi.glsl';
+import { noiseChunk } from '@/shaders/chunks/noise.glsl';
 import { blueprintChunk, streaksChunk } from './chunks.glsl';
-import { transitionFx } from './fxState';
-import type { RiftTransitionKind } from '../pillars';
+import { transitionFx, type TransitionFxKind } from './fxState';
 
-const MODE: Record<RiftTransitionKind, number> = { shatter: 1, warp: 2, swallow: 3 };
+const MODE: Record<TransitionFxKind, number> = { shatter: 1, warp: 2, swallow: 3, rift: 4 };
 
 /**
  * A sobreposição de transição: UM efeito de pós-processamento, três matemáticas.
@@ -26,8 +26,10 @@ uniform vec2 uOrigin;    // UV de tela onde a transição nasce
 uniform vec3 uColor;
 uniform float uAspect;
 uniform float uClock;
+uniform float uSpread; // rift: meia-abertura da fenda na tela (alturas de tela)
 
 ${voronoiChunk}
+${noiseChunk}
 ${blueprintChunk}
 ${streaksChunk}
 
@@ -169,12 +171,38 @@ vec3 swallow(vec2 uv) {
   return mix(image, liquid, smoothstep(0.8, 1.0, k));
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// RIFT — a luz da fissura do fruto 1
+//   A luz nasce da PRÓPRIA fenda (uma linha vertical em uOrigin.x que se abre
+//   em dois lábios a ±uSpread), não do que já brilha na cena: os mesmos
+//   feixes horizontais dos dois lados, um halo largo e um núcleo junto aos
+//   lábios. (A versão anterior marchava até um ponto somando o que brilhava
+//   no caminho: o tronco da árvore era arrastado em "ondas" à esquerda e a
+//   direita, sem nada brilhante, ficava apagada.) Sem amostras extras.
+// ─────────────────────────────────────────────────────────────────────────────
+vec3 rift(vec2 uv) {
+  float k = uProgress;
+  float strength = smoothstep(0.0, 0.12, k) * (1.0 - smoothstep(0.8, 1.0, k));
+  float split = 0.004 * smoothstep(0.5, 1.0, k);
+  vec2 dir = uv - uOrigin;
+  vec3 image = vec3(
+    texture2D(inputBuffer, uv + dir * split).r,
+    texture2D(inputBuffer, uv).g,
+    texture2D(inputBuffer, uv - dir * split).b
+  );
+  float edge = abs(abs(uv.x - uOrigin.x) * uAspect - uSpread);
+  float beams = 0.45 + 0.55 * valueNoise(vec2(uv.y * 42.0, uClock * 0.7)) * valueNoise(vec2(uv.y * 9.0 + 3.0, uClock * 0.35));
+  // Presa aos lábios: quando eles saem da tela, a luz sai junto (nada de névoa sobre o túnel do outro lado).
+  float glow = exp(-edge * 16.0) * 0.4 + exp(-edge * 6.0) * 0.12 * beams;
+  return image + vec3(0.22, 0.95, 0.72) * glow * strength;
+}
+
 void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor) {
   if (uMode < 0.5) {
     outputColor = inputColor;
     return;
   }
-  vec3 color = uMode < 1.5 ? shatter(uv) : uMode < 2.5 ? warp(uv) : swallow(uv);
+  vec3 color = uMode < 1.5 ? shatter(uv) : uMode < 2.5 ? warp(uv) : uMode < 3.5 ? swallow(uv) : rift(uv);
   outputColor = vec4(color, inputColor.a);
 }
 `;
@@ -192,6 +220,7 @@ export class TransitionEffect extends Effect {
         ['uColor', new Uniform(new Color(1, 1, 1))],
         ['uAspect', new Uniform(1)],
         ['uClock', new Uniform(0)],
+        ['uSpread', new Uniform(0)],
       ]),
     });
   }
@@ -206,6 +235,7 @@ export class TransitionEffect extends Effect {
     (uniforms.get('uColor')!.value as Color).copy(transitionFx.color);
     uniforms.get('uAspect')!.value = inputBuffer.width / Math.max(1, inputBuffer.height);
     uniforms.get('uClock')!.value = this.clock;
+    uniforms.get('uSpread')!.value = transitionFx.spread;
   }
 }
 

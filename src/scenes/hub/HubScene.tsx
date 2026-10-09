@@ -25,9 +25,9 @@ import { BeamRemnant } from './BeamRemnant';
 import { HubCameraRig } from './HubCameraRig';
 import { registerDebug } from '@/engine/debug';
 import { resetTransitionFx } from '../shared/transitions/fxState';
-import { KIDNAP_HANDOFF, RETURN_HANDOFF } from '../shared/handoff';
-import { Kidnap } from './Kidnap';
-import { LightIn } from './LightIn';
+import { RETURN_HANDOFF } from '../shared/handoff';
+import { RealityRift } from './RealityRift';
+import { PulseIn } from './PulseIn';
 
 /** CPU: gera a árvore num Web Worker (disparado durante a intro). */
 export async function prepare() {
@@ -73,11 +73,11 @@ export default function HubScene() {
       ),
   );
   const get = useThree((state) => state.get);
-  // Volta de um reino que terminou em luz: a hub nasce do mesmo branco.
+  // Volta de um reino que terminou no pulso: a hub nasce do mesmo escuro, revelada pelo pulso.
   // (Lido no initializer, zerado num effect: o StrictMode chama initializers duas vezes.)
-  const [fromLight] = useState(() => RETURN_HANDOFF.fromLight);
+  const [fromPulse] = useState(() => RETURN_HANDOFF.fromPulse);
   useEffect(() => {
-    RETURN_HANDOFF.fromLight = false;
+    RETURN_HANDOFF.fromPulse = false;
   }, []);
 
   const aspect = useThree((state) => state.size.width / state.size.height);
@@ -126,9 +126,9 @@ export default function HubScene() {
   // O primeiro fruto despertou: a árvore fala de novo, depois que a explosão assenta.
   useEffect(() => {
     let timer = 0;
-    // O primeiro fruto estilhaça… e algo sai dele: o sequestro, depois que a explosão respira.
+    // O primeiro fruto estilhaça as correntes… e se rompe numa fissura na realidade, depois que a explosão respira.
     director.setBreakListener((fruit) => {
-      if (fruit === 0) timer = window.setTimeout(() => director.kidnap(), 1100);
+      if (fruit === 0) timer = window.setTimeout(() => director.rupture(), 1100);
     });
     return () => {
       director.setBreakListener(null);
@@ -140,7 +140,6 @@ export default function HubScene() {
   useFrame((state, delta) => {
     const realm = director.tick(state.clock.elapsedTime, clampDelta(delta));
     if (realm) {
-      if (realm === 'realm_architecture' && director.kidnapClock >= 0) KIDNAP_HANDOFF.fromBlack = true;
       useAppStore.getState().setScene(realm);
     }
 
@@ -165,8 +164,8 @@ export default function HubScene() {
     const dialogue = useHubDialogue.getState();
     if (progress.isUnlocked(slot)) {
       dialogue.dismiss();
-      // O fruto 1 sempre leva pelo sequestro; os outros, pela transição do pilar.
-      if (fruit === 0) director.kidnap();
+      // O fruto 1 sempre leva pela fissura na realidade; os outros, pela transição do pilar.
+      if (fruit === 0) director.rupture();
       else director.beginTransition(PILLARS[fruit], target, get().camera as PerspectiveCamera);
     } else if (slot === 1) {
       dialogue.say('call');
@@ -187,8 +186,8 @@ export default function HubScene() {
         <Fruits kit={kit} director={director} onFruitClick={onFruitClick} />
       </YggdrasilTree>
       {arrival === 'beam' && <BeamRemnant kit={kit} />}
-      {fromLight && <LightIn />}
-      <Kidnap director={director} />
+      {fromPulse && <PulseIn />}
+      <RealityRift kit={kit.rift} director={director} />
       <HubCameraRig framing={framing} director={director} />
     </>
   );

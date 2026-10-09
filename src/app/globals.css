@@ -17,33 +17,48 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 
-/* ── O Despertar (reino Architecture): holograma brutalista ───────────────── */
-@keyframes holo-blink {
-  0%, 46% { opacity: 1; }
-  50%, 96% { opacity: 0.18; }
-  100% { opacity: 1; }
-}
-
-@keyframes holo-flicker {
-  0%, 100% { opacity: 1; }
-  7% { opacity: 0.86; }
-  8% { opacity: 1; }
-  61% { opacity: 0.93; }
-  62% { opacity: 0.7; }
-  63% { opacity: 1; }
-}
-
+/* ── A Metrópole (reino Architecture) ─────────────────────────────────────── */
 @keyframes holo-glitch {
-  0% { transform: translate(0, 0); clip-path: inset(0 0 0 0); filter: none; }
-  10% { transform: translate(-14px, 2px) skewX(-6deg); clip-path: inset(12% 0 58% 0); filter: hue-rotate(-60deg) saturate(3); }
-  20% { transform: translate(18px, -3px); clip-path: inset(48% 0 22% 0); filter: hue-rotate(110deg); }
+  /* Só transform, clip-path e opacidade: nada de filter (repintura cara sobre o WebGL). */
+  0% { transform: translate(0, 0); clip-path: inset(0 0 0 0); }
+  10% { transform: translate(-14px, 2px) skewX(-6deg); clip-path: inset(12% 0 58% 0); }
+  20% { transform: translate(18px, -3px); clip-path: inset(48% 0 22% 0); }
   32% { transform: translate(-6px, 0) skewX(10deg); clip-path: inset(0 0 80% 0); }
-  44% { transform: translate(24px, 4px); clip-path: inset(66% 0 4% 0); filter: hue-rotate(-140deg) saturate(4); }
+  44% { transform: translate(24px, 4px); clip-path: inset(66% 0 4% 0); }
   58% { transform: translate(-30px, -2px) scaleY(0.6); clip-path: inset(30% 0 40% 0); }
-  72% { transform: translate(8px, 0) scaleY(0.2); clip-path: inset(45% 0 45% 0); filter: brightness(3); }
+  72% { transform: translate(8px, 0) scaleY(0.2); clip-path: inset(45% 0 45% 0); opacity: 0.8; }
   100% { transform: translate(0, 0) scaleY(0); clip-path: inset(50% 0 50% 0); opacity: 0; }
 }
 
-.holo-scanlines {
-  background-image: repeating-linear-gradient(to bottom, rgb(110 231 183 / 0.07) 0 1px, transparent 1px 3px);
+@keyframes screen-tear {
+  0% { transform: translateY(0); opacity: 1; }
+  12% { transform: translateY(-9%); opacity: 0.6; }
+  25% { transform: translateY(14%); opacity: 1; }
+  38% { transform: translateY(-22%) scaleY(1.6); opacity: 0.8; }
+  52% { transform: translateY(6%); opacity: 1; }
+  66% { transform: translateY(30%) scaleY(0.6); opacity: 0.5; }
+  80% { transform: translateY(-4%); opacity: 0.9; }
+  100% { transform: translateY(0); opacity: 0; }
+}
+
+/* Janelas de Sistema (estilo manhwa) e indicadores da jornada */
+@keyframes sys-blink {
+  0%, 55% { opacity: 1; }
+  60%, 95% { opacity: 0.25; }
+  100% { opacity: 1; }
+}
+
+/* Tecla sendo SEGURADA: afunda, acende e fica. */
+@keyframes key-hold {
+  0%, 12% { transform: translateY(0); box-shadow: 0 3px 0 rgba(255, 255, 255, 0.18); border-color: rgba(255, 255, 255, 0.35); }
+  20%, 80% { transform: translateY(3px); box-shadow: 0 0 0 rgba(255, 255, 255, 0), 0 0 18px rgba(52, 211, 153, 0.55); border-color: rgba(167, 243, 208, 0.95); }
+  90%, 100% { transform: translateY(0); box-shadow: 0 3px 0 rgba(255, 255, 255, 0.18); border-color: rgba(255, 255, 255, 0.35); }
+}
+
+/* Dedo: encosta, arrasta para cima e SEGURA. */
+@keyframes drag-hold {
+  0% { transform: translateY(18px) scale(1.08); opacity: 0; }
+  12% { transform: translateY(18px) scale(1); opacity: 1; }
+  40%, 82% { transform: translateY(-14px) scale(1); opacity: 1; }
+  100% { transform: translateY(-14px) scale(1); opacity: 0; }
 }

@@ -7,7 +7,7 @@ import { useAppStore } from '@/engine/store/useAppStore';
 import { LoadingScreen } from './LoadingScreen';
 import { StartPrompt } from './StartPrompt';
 import { RealmHud } from './RealmHud';
-import { AwakeningHud } from './architecture/AwakeningHud';
+import { MetropolisHud } from './architecture/MetropolisHud';
 import { TreeDialogue } from './hub/TreeDialogue';
 import { ResetRitualButton } from './hub/ResetRitualButton';
 
@@ -42,7 +42,7 @@ export function UIOverlay() {
         {view === 'start' && <StartPrompt key="start" />}
         {view === 'realm' &&
           (currentScene === 'realm_architecture' ? (
-            <AwakeningHud key={currentScene} />
+            <MetropolisHud key={currentScene} />
           ) : (
             <RealmHud key={currentScene} scene={currentScene} />
           ))}

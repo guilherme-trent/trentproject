@@ -12,18 +12,19 @@ const line: Variants = {
   visible: { transition: { staggerChildren: WORD_STAGGER, delayChildren: 0.35 } },
 };
 
+/** Só opacity e transform (compositor): animar `filter: blur` por palavra repintava o texto sobre o canvas a cada frame — e a montagem custava >100 ms. */
 const word: Variants = {
-  hidden: { opacity: 0, y: 10, filter: 'blur(8px)' },
-  visible: { opacity: 1, y: 0, filter: 'blur(0px)', transition: { duration: 0.9, ease: [0.22, 1, 0.36, 1] } },
+  hidden: { opacity: 0, y: 10 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.9, ease: [0.22, 1, 0.36, 1] } },
 };
 
 /**
  * A voz da Yggdrasil — HTML sobre o WebGL, cinematográfico e etéreo.
  *
  *   - um fio de luz se abre acima da fala;
- *   - as palavras surgem uma a uma, saindo de um desfoque (só opacity,
- *     transform e um blur pequeno em spans curtos: nada de backdrop-filter
- *     sobre o canvas, que repinta a cada frame);
+ *   - as palavras surgem uma a uma, subindo e acendendo (só opacity e
+ *     transform: nada de filter/backdrop-filter sobre o canvas, que
+ *     repinta a cada frame — medido);
  *   - as escolhas só aparecem quando a fala termina;
  *   - falas sem escolha somem sozinhas (`holdMs`).
  * A legibilidade vem de uma vinheta radial escura (gradiente puro), não de caixa.
@@ -61,7 +62,7 @@ function Speech({ line: speech }: { line: DialogueLine }) {
       className="absolute inset-x-0 bottom-[max(9%,env(safe-area-inset-bottom))] flex justify-center px-6"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1, transition: { duration: 0.6 } }}
-      exit={{ opacity: 0, y: -12, filter: 'blur(6px)', transition: { duration: 0.6, ease: 'easeIn' } }}
+      exit={{ opacity: 0, y: -12, transition: { duration: 0.6, ease: 'easeIn' } }}
     >
       {/* Vinheta: escurece o céu atrás da fala, sem caixa. */}
       <div className="pointer-events-none absolute inset-x-0 -bottom-[12vh] h-[52vh] bg-[radial-gradient(ellipse_55%_60%_at_50%_70%,rgba(0,0,0,0.78),transparent)]" />

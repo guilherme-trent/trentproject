@@ -6,6 +6,7 @@ import {
   Mesh,
   MeshBasicMaterial,
   PlaneGeometry,
+  Points,
   SphereGeometry,
   type Object3D,
   type WebGLRenderTarget,
@@ -17,6 +18,7 @@ import { useAppStore } from '@/engine/store/useAppStore';
 import { createFullscreenTriangle } from '@/shaders/fullscreen';
 import { PILLARS, type PillarId } from '../shared/pillars';
 import { createHubUniforms, type HubUniforms } from './uniforms';
+import { createRiftKit, RIFT_SHARDS, type RiftKit } from './RealityRift';
 import { getYggdrasil, prepareYggdrasil } from './yggdrasil/loader';
 import type { YggdrasilData } from './yggdrasil/generator';
 import { TimelineMaterial } from './materials/TimelineMaterial';
@@ -88,6 +90,8 @@ export interface HubKit {
     hit: { geometry: BufferGeometry; material: MeshBasicMaterial };
   };
   remnant: { geometry: BufferGeometry; material: BeamRemnantMaterial };
+  /** A fissura do fruto 1 (ver RealityRift). */
+  rift: RiftKit;
 }
 
 function createTreeGeometry(data: YggdrasilData): BufferGeometry {
@@ -135,6 +139,7 @@ export function createHubKit(data: YggdrasilData): HubKit {
       hit: { geometry: new SphereGeometry(FRUIT_HIT_RADIUS, 12, 8), material: new MeshBasicMaterial() },
     },
     remnant: { geometry: createFullscreenTriangle(), material: new BeamRemnantMaterial() },
+    rift: createRiftKit(),
   };
 }
 
@@ -173,6 +178,10 @@ export async function warmHubKit({ gl, camera }: WarmupContext) {
     // Mesmo TIPO de objeto da cena (InstancedMesh): a variante do programa depende disso.
     Object.assign(new InstancedMesh(kit.fruits.chains.geometry, kit.fruits.chains.material, kit.fruits.chains.count), { name: 'fruit-chains' }),
     Object.assign(new InstancedMesh(kit.fruits.shards.geometry, kit.fruits.shards.material, kit.fruits.shards.count), { name: 'fruit-shards' }),
+    // A fissura: inativa (colapsa no vertex shader), mas o draw de 1 pixel liga o programa (o driver adia o link).
+    Object.assign(new Mesh(kit.rift.quad, kit.rift.materials.rift), { name: 'rift' }),
+    Object.assign(new InstancedMesh(kit.rift.shardGeometry, kit.rift.materials.shards, RIFT_SHARDS), { name: 'rift-shards' }),
+    Object.assign(new Points(kit.rift.sparkGeometry, kit.rift.materials.sparks), { name: 'rift-sparks' }),
   ];
   for (const object of staging) object.frustumCulled = false;
 

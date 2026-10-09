@@ -57,13 +57,13 @@ export const LINES = {
   'sealed-2': {
     id: 'sealed-2',
     speaker: 'Yggdrasil',
-    text: `Vontade não basta para estas correntes. Desperte o seu título no Reino da Arquitetura.`,
+    text: `Vontade não basta para estas correntes. Traga a ${EQUIPMENT.seiva_pura.name} do Reino da Arquitetura.`,
     holdMs: 5600,
   },
   'ready-2': {
     id: 'ready-2',
     speaker: 'Yggdrasil',
-    text: `O ${EQUIPMENT.title_software_engineer.name} ressoa. Toque o segundo fruto e quebre suas correntes.`,
+    text: `A ${EQUIPMENT.seiva_pura.name} pulsa em você. Toque o segundo fruto e dissolva suas correntes.`,
     holdMs: 6200,
   },
   'sealed-3': {
