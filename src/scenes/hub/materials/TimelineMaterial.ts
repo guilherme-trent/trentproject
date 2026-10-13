@@ -62,7 +62,7 @@ void main() {
 
   float grown;
   float front;
-  p = grow(p, reach, seed, grown, front);
+  p = grow(p, aThread.z, seed, grown, front);
 
   vec4 viewPosition = modelViewMatrix * vec4(p, 1.0);
   gl_Position = projectionMatrix * viewPosition;

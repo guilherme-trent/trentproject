@@ -40,8 +40,15 @@ export const YGGDRASIL = {
       { length: 3.4, radius: 0.34, children: 2, spread: 0.6, lift: 0.08 },
       { length: 2.6, radius: 0.2, children: 0, spread: 0.65, lift: -0.06 },
     ],
-    /** Raio do feixe na ponta: > raio do galho = os fios se abrem em leque. */
-    tipRadius: 0.42,
+    /** Raio do feixe na ponta: afina (a trança fecha a ponta em vez de abrir em leque). */
+    tipRadius: 0.16,
+    /**
+     * Pontas TRANÇADAS: entre `from` e `to` (região do fio) o feixe se divide em
+     * `strands` mechas que giram umas em torno das outras (`twist` rad/u) — uma
+     * trança que afina até a ponta. `spread`: distância das mechas ao eixo e
+     * `ply`: raio de cada mecha, ambos em frações do raio do feixe.
+     */
+    braid: { from: 0.42, to: 0.72, strands: 3, twist: 2.6, spread: 0.62, ply: 0.42 },
   },
   roots: {
     branches: 6,
@@ -238,8 +245,15 @@ function resample(points: Vec3[], radii: number[], count: number) {
 
 // ── 3. Montagem ───────────────────────────────────────────────────────────────
 
+/** smoothstep(0, 1, x). */
+const smooth01 = (x: number) => {
+  const t = Math.min(1, Math.max(0, x));
+  return t * t * (3 - 2 * t);
+};
+
 export function generateYggdrasil(threadCount: number = YGGDRASIL.threads): YggdrasilData {
   const { trunk, samplesPerThread: samples, twist } = YGGDRASIL;
+  const { braid } = YGGDRASIL.canopy;
   const rng = mulberry32(YGGDRASIL.seed);
 
   const trunkTop: Vec3 = [0, trunk.topY, 0];
@@ -298,6 +312,8 @@ export function generateYggdrasil(threadCount: number = YGGDRASIL.threads): Yggd
     const radial = Math.sqrt(rng()) * 0.95;
     const phase0 = rng() * Math.PI * 2;
     const weave = rng() * 10;
+    // Mecha da trança nas pontas: derivada de `weave`, sem consumir o rng (a árvore não muda de forma).
+    const strand = Math.floor(((weave * 7.13) % 1) * braid.strands);
 
     // Região na forquilha do galho principal deste fio (média por galho, ver mainBranchRegions).
     const fork: Vec3 = [mainBranches[branch.main * 3], mainBranches[branch.main * 3 + 1], mainBranches[branch.main * 3 + 2]];
@@ -324,10 +340,24 @@ export function generateYggdrasil(threadCount: number = YGGDRASIL.threads): Yggd
       const binormal = cross(tangent, normal);
 
       const s = curve.arc[k];
+      const region =
+        s < trunkMidArc ? -(trunkMidArc - s) / (trunkMidArc || 1) : (s - trunkMidArc) / (curve.total - trunkMidArc || 1);
       const angle = phase0 + twist * s;
       // "Trama": o fio entra e sai do feixe, dando textura de corda trançada.
       const r = curve.radii[k] * radial * (1 + 0.15 * Math.sin(s * 1.3 + weave));
-      const p = add(c, add(scale(normal, Math.cos(angle) * r), scale(binormal, Math.sin(angle) * r)));
+      let ox = Math.cos(angle) * r;
+      let oy = Math.sin(angle) * r;
+      // Pontas da copa: o feixe vira trança — cada mecha orbita o eixo, e o fio, a sua mecha.
+      const b = region > 0 ? smooth01((region - braid.from) / (braid.to - braid.from)) : 0;
+      if (b > 0) {
+        const R = curve.radii[k];
+        const orbit = (strand / braid.strands) * Math.PI * 2 + braid.twist * s;
+        const bx = Math.cos(orbit) * R * braid.spread + Math.cos(angle) * R * braid.ply * radial;
+        const by = Math.sin(orbit) * R * braid.spread + Math.sin(angle) * R * braid.ply * radial;
+        ox += (bx - ox) * b;
+        oy += (by - oy) * b;
+      }
+      const p = add(c, add(scale(normal, ox), scale(binormal, oy)));
 
       const v = (base + k) * 3;
       positions[v] = p[0];
@@ -338,8 +368,6 @@ export function generateYggdrasil(threadCount: number = YGGDRASIL.threads): Yggd
         if (p[a] > max[a]) max[a] = p[a];
       }
 
-      const region =
-        s < trunkMidArc ? -(trunkMidArc - s) / (trunkMidArc || 1) : (s - trunkMidArc) / (curve.total - trunkMidArc || 1);
       const w = (base + k) * 4;
       thread[w] = seed;
       thread[w + 1] = k / (samples - 1);
