@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore, type ReactNode } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
+import { mulberry32 } from '@/engine/lib/random';
 import { useAppStore } from '@/engine/store/useAppStore';
 import { EQUIPMENT } from '@/engine/store/useProgressStore';
 import { ADMIN, BACK_LABEL, CHAOS_MESSAGE, INTERCEPT, TIMING } from '@/scenes/realm-architecture/metropolis/config';
@@ -11,24 +12,33 @@ import type { MetropolisDirector, MetropolisStage } from '@/scenes/realm-archite
 
 const returnToTree = () => useAppStore.getState().setScene('hub');
 
-/** O manifesto — o texto aprovado, palavra por palavra. */
+/** O manifesto — o texto aprovado, digitado letra por letra. */
 const MANIFESTO =
   'Dominar ferramentas que são capazes de criar o que ainda nem sequer existe e, ao mesmo tempo, trazer experiências únicas e imersivas é uma habilidade de desbravação. É uma habilidade que permite explorar, criar, desenvolver e inovar. Quando você domina essas qualificações, você recebe um título natural que é gravado em seu ser pelo resto da sua vida.';
 
 /**
- * Ritmo de LEITURA: ~4 palavras/s (≈ 250 palavras por minuto, a velocidade
- * de quem lê com atenção), respiro nas vírgulas e um fôlego nos pontos.
+ * Ritmo de DIGITAÇÃO na velocidade de leitura: ~28 caracteres/s (≈ 280
+ * palavras por minuto — quem lê acompanha sem esperar), com a irregularidade
+ * de uma mão de verdade (±jitter/2 por tecla, espaço mais ligeiro), respiro
+ * nas vírgulas e um fôlego nos pontos.
  */
-const READING = { word: 0.24, comma: 0.14, period: 0.6, fade: 0.7 } as const;
-function readingSchedule(text: string, start: number) {
-  let at = start;
-  const words = text.split(' ').map((word) => {
-    const delay = at;
-    at += READING.word + (word.endsWith('.') ? READING.period : word.endsWith(',') ? READING.comma : 0);
-    return { word, delay };
-  });
-  return { words, end: at };
+const TYPING = { char: 1 / 28, jitter: 0.5, space: 0.7, comma: 0.16, period: 0.42 } as const;
+
+/** Instante (s, desde o início da digitação) em que cada caractere aparece — mesma semente, mesmo ritmo. */
+function typingSchedule(text: string) {
+  const random = mulberry32(0x7e47);
+  const times = new Float32Array(text.length);
+  let at = 0;
+  for (let i = 0; i < text.length; i++) {
+    times[i] = at;
+    const char = text[i];
+    at += TYPING.char * (char === ' ' ? TYPING.space : 1) * (1 + (random() - 0.5) * TYPING.jitter);
+    if (char === ',') at += TYPING.comma;
+    else if (char === '.') at += TYPING.period;
+  }
+  return times;
 }
+const MANIFESTO_TIMES = typingSchedule(MANIFESTO);
 
 /** Etapas sem a moldura do reino: o fake-out precisa parecer real; a forja e a saída são cinema. */
 const NO_CHROME = new Set<MetropolisStage>(['glitch', 'intercept', 'shatter', 'forge', 'relic', 'exit']);
@@ -283,13 +293,58 @@ function Phrase({ children, delay, className = '' }: { children: ReactNode; dela
 
 // ── O título ─────────────────────────────────────────────────────────────────
 
+/**
+ * A digitação do manifesto, fora do React: um rAF escreve direto no DOM (zero
+ * re-render por letra). O trecho ainda não digitado fica no fluxo, invisível —
+ * o texto nasce com o tamanho e as quebras de linha finais, nada pula.
+ * Devolve `finish` (revela o resto na hora) e `done`, que muda uma única vez.
+ */
+function useTypewriter(startAt: number) {
+  const typed = useRef<HTMLSpanElement>(null);
+  const pending = useRef<HTMLSpanElement>(null);
+  const finish = useRef(() => {});
+  const [done, setDone] = useState(false);
+
+  useLayoutEffect(() => {
+    let shown = -1;
+    let elapsed = -startAt;
+    let last = performance.now();
+    let frame = 0;
+    const show = (count: number) => {
+      if (count === shown) return;
+      shown = count;
+      typed.current!.textContent = MANIFESTO.slice(0, count);
+      pending.current!.textContent = MANIFESTO.slice(count);
+    };
+    const complete = () => {
+      cancelAnimationFrame(frame);
+      show(MANIFESTO.length);
+      setDone(true);
+    };
+    const loop = (now: number) => {
+      // Passo limitado: aba em segundo plano retoma de onde parou, sem despejar o texto.
+      elapsed += Math.min(0.1, (now - last) / 1000);
+      last = now;
+      let count = shown;
+      while (count < MANIFESTO.length && MANIFESTO_TIMES[count] <= elapsed) count++;
+      show(count);
+      if (count >= MANIFESTO.length) complete();
+      else frame = requestAnimationFrame(loop);
+    };
+    show(0);
+    finish.current = complete;
+    frame = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(frame);
+  }, [startAt]);
+
+  return { typed, pending, finish, done };
+}
+
 function TitleWindow({ glitching }: { glitching: boolean }) {
   const director = useMetropolis((state) => state.director);
-  // Quem lê mais rápido toca no texto e ele se revela inteiro.
-  const [hurried, setHurried] = useState(false);
   const base = 0.6;
-  const { words, end } = readingSchedule(MANIFESTO, base + 1.5);
-  const footerAt = hurried ? 0.2 : end + 0.4;
+  // Quem lê mais rápido toca no texto e ele se revela inteiro.
+  const { typed, pending, finish, done } = useTypewriter(base + 1.5);
   return (
     <motion.div
       className="absolute inset-0 flex items-center justify-center overflow-y-auto px-3 py-4 sm:px-4"
@@ -307,30 +362,23 @@ function TitleWindow({ glitching }: { glitching: boolean }) {
           </header>
 
           <p
-            key={hurried ? 'inteiro' : 'lendo'}
             aria-label={MANIFESTO}
-            onClick={() => setHurried(true)}
+            onClick={() => finish.current()}
             className="pointer-events-auto mt-[clamp(14px,3vh,30px)] font-serif text-[clamp(18px,2.8vh,28px)] font-normal leading-[1.42] text-white/90"
           >
-            {words.map(({ word, delay }, i) => (
-              <motion.span
-                key={i}
-                aria-hidden
-                className="inline-block whitespace-pre"
-                initial={hurried ? false : { opacity: 0, y: 5 }}
-                animate={{ opacity: 1, y: 0, transition: { delay, duration: READING.fade, ease: [0.22, 1, 0.36, 1] } }}
-              >
-                {word}
-                {i < words.length - 1 ? ' ' : ''}
-              </motion.span>
-            ))}
+            <span ref={typed} aria-hidden />
+            {/* Cursor: span inline vazio (não abre ponto de quebra no meio da palavra); a barra é absoluta. */}
+            <span aria-hidden className={`relative transition-opacity duration-700 ${done ? 'opacity-0' : ''}`}>
+              <span className="absolute left-[0.03em] top-[0.2em] h-[1.05em] w-[0.06em] bg-emerald-200/90" style={{ animation: 'sys-blink 1.05s steps(1, end) infinite' }} />
+            </span>
+            <span ref={pending} aria-hidden className="invisible" />
           </p>
 
           <motion.footer
             className="mt-[clamp(16px,3.4vh,34px)] grid items-end gap-4 border-t border-white/10 pt-[clamp(12px,2.4vh,22px)] sm:grid-cols-[1fr_auto]"
-            key={hurried ? 'inteiro' : 'lendo'}
+            inert={!done}
             initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0, transition: { delay: footerAt, duration: 0.7 } }}
+            animate={done ? { opacity: 1, y: 0, transition: { delay: 0.35, duration: 0.7 } } : { opacity: 0, y: 8 }}
           >
             <div>
               <p className={LABEL}>Título</p>
