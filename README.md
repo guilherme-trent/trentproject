@@ -9,6 +9,8 @@ tópicos. Em vez de ler sobre arquitetura, performance e experiência, você
 
 Roda no desktop e no celular, com áudio, e se adapta sozinho ao poder da sua GPU.
 
+### ▶ [Viva a experiência: trentproject.vercel.app](https://trentproject.vercel.app/)
+
 ---
 
 ## A jornada
@@ -126,5 +128,6 @@ a fonte de verdade para o preload, para a limpeza de memória e para a tipagem.
 
 ## Deploy
 
-O site é publicado na [Vercel](https://vercel.com) a partir da branch `main`:
-cada push gera um novo deploy automaticamente.
+O site é publicado na [Vercel](https://vercel.com) em
+[trentproject.vercel.app](https://trentproject.vercel.app/), a partir da branch
+`main`: cada push gera um novo deploy automaticamente.
