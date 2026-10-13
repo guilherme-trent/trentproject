@@ -91,7 +91,7 @@ export default function HubScene() {
       }),
     [data.bounds, aspect, kit],
   );
-  /** Momento (relógio da cena) em que a árvore terminou de brotar; o chamado vem logo depois. */
+  /** Momento (relógio da cena) em que os frutos terminaram de nascer; o chamado vem logo depois. */
   const calledAt = useRef<number | null>(null);
 
   useEffect(() => applyFraming(kit.uniforms, framing), [kit, framing]);
@@ -143,10 +143,10 @@ export default function HubScene() {
       useAppStore.getState().setScene(realm);
     }
 
-    // A árvore fala ~1s depois de terminar de brotar: o chamado (fruto 1 ainda
-    // dorme) ou, de volta com a relíquia, o convite para o fruto 2.
-    if (director.growth >= 1 && calledAt.current === null) calledAt.current = state.clock.elapsedTime;
-    if (calledAt.current !== null && calledAt.current >= 0 && state.clock.elapsedTime - calledAt.current > 1.1) {
+    // A árvore fala logo depois que os frutos terminam de nascer: o chamado
+    // (fruto 1 ainda dorme) ou, de volta com a relíquia, o convite para o fruto 2.
+    if (director.growth >= 1 && director.bloomed && calledAt.current === null) calledAt.current = state.clock.elapsedTime;
+    if (calledAt.current !== null && calledAt.current >= 0 && state.clock.elapsedTime - calledAt.current > 0.7) {
       calledAt.current = -1;
       const progress = useProgressStore.getState();
       if (!progress.fruit1Unlocked) useHubDialogue.getState().say('call');

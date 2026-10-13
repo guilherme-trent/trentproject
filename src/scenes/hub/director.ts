@@ -34,12 +34,17 @@ const AWAKENING = { rise: 1.7, stem: 0.45, settle: 1.2 } as const;
  */
 const HUSH_SECONDS = 1.5;
 /**
- * O fruto desabrocha no instante em que o ÚLTIMO fio do caule pousa (mesma
- * conta do shader de crescimento) e leva BLOOM_SECONDS para abrir.
+ * O fruto NASCE do caule, no instante em que o ÚLTIMO fio dele pousa (mesma
+ * conta do shader de crescimento). Segundos desde então:
+ *   swell  a seiva se acumula na ponta — um broto de luz, fino — e incha em
+ *          pulsos até a gota inteira, amadurecendo na cor do pilar;
+ *   seal   as correntes se forjam elo a elo, incandescentes;
+ *   end    e esfriam até o ferro escuro.
  */
 const BLOOM_START = growthLandedAt(STEM_END_REGION);
-const BLOOM_SECONDS = 0.7;
-const easeOutBack = (x: number) => 1 + 2.2 * (x - 1) ** 3 + 1.2 * (x - 1) ** 2;
+const BLOOM = { swell: 1.8, seal: [1.3, 2.2] as const, end: 2.7 } as const;
+/** Arranque lento, três pulsos de seiva (a árvore bombeando) e assenta sem overshoot: f(0) = 0, f(1) = 1. */
+const swellCurve = (x: number) => Math.max(0, x * x * (3 - 2 * x) + 0.03 * Math.sin(x * Math.PI * 6) * (1 - x));
 
 /**
  * A ruptura do fruto 1 (s desde o início):
@@ -125,7 +130,7 @@ export class HubDirector {
     // Voltando de um reino: a árvore já está de pé.
     if (arrival === 'return') {
       this.growthClock = GROWTH_SECONDS;
-      this.bloomClock = BLOOM_SECONDS;
+      this.bloomClock = BLOOM.end;
     }
     // Frutos já despertos (progressão persistida) nascem sem correntes.
     const progress = useProgressStore.getState();
@@ -213,9 +218,14 @@ export class HubDirector {
     return this.progress;
   }
 
-  /** Hover e clique só depois que a árvore brotou, e nunca durante uma transição, um despertar ou o sequestro. */
+  /** Os frutos terminaram de nascer (correntes fechadas — ainda podem estar esfriando). */
+  get bloomed() {
+    return this.bloomClock >= BLOOM.seal[1];
+  }
+
+  /** Hover e clique só depois que a árvore brotou e os frutos nasceram, e nunca durante uma transição, um despertar ou o sequestro. */
   get canInteract() {
-    return this.growth >= 1 && !this.transition && !this.awakening && this.riftClock < 0;
+    return this.growth >= 1 && this.bloomed && !this.transition && !this.awakening && this.riftClock < 0;
   }
 
   /**
@@ -226,8 +236,10 @@ export class HubDirector {
   private tickFruits(delta: number) {
     const u = this.uniforms;
     const f = this.fruitUniforms;
-    if (this.growth >= BLOOM_START) this.bloomClock = Math.min(BLOOM_SECONDS, this.bloomClock + delta);
-    f.uAppear.value = this.bloomClock > 0 ? easeOutBack(this.bloomClock / BLOOM_SECONDS) : 0;
+    if (this.growth >= BLOOM_START) this.bloomClock = Math.min(BLOOM.end, this.bloomClock + delta);
+    f.uAppear.value = this.bloomClock > 0 ? swellCurve(Math.min(1, this.bloomClock / BLOOM.swell)) : 0;
+    // Sem clamp: passa de 1 durante o esfriamento (o shader mede o calor de cada elo por aí).
+    f.uSeal.value = (this.bloomClock - BLOOM.seal[0]) / (BLOOM.seal[1] - BLOOM.seal[0]);
 
     u.uSurgeFront.value = -9;
     let hush = 0;

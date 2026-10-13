@@ -22,6 +22,8 @@ export const FRUITS = 3;
 const SEAL = [1.0, 0.14, 0.07] as const satisfies RGB;
 /** Centro da gaiola em relação ao centro do cristal (o pavilhão é mais longo que a coroa). */
 const CAGE_CENTER_Y = (DROP.top + DROP.bottom) / 2;
+/** Forja do selo: quanto de uSeal cada elo leva para se formar (sobreposição entre elos vizinhos). */
+const SEAL_SPAN = 0.25;
 
 export interface FruitUniforms {
   [name: string]: IUniform;
@@ -36,10 +38,12 @@ export interface FruitUniforms {
   /** 1 = o jogador tem o que estas correntes exigem: as runas chamam para serem quebradas. */
   uReady: IUniform<number[]>;
   /**
-   * Escala do desabrochar (0 → 1, com um leve overshoot): começa no instante
-   * em que o último fio do caule pousa — o fruto nasce na ponta do caule.
+   * O nascimento (0 → 1, em pulsos): começa no instante em que o último fio
+   * do caule pousa — um broto de seiva na ponta do caule que incha até o fruto.
    */
   uAppear: IUniform<number>;
+  /** Forja das correntes: 0 → 1 fecha o selo elo a elo; acima de 1, os últimos elos esfriam. */
+  uSeal: IUniform<number>;
 }
 
 export function createFruitUniforms(centers: readonly (readonly [number, number, number])[], colors: readonly RGB[]): FruitUniforms {
@@ -51,6 +55,7 @@ export function createFruitUniforms(centers: readonly (readonly [number, number,
     uHover: { value: [0, 0, 0] },
     uReady: { value: [0, 0, 0] },
     uAppear: { value: 0 },
+    uSeal: { value: 0 },
   };
 }
 
@@ -62,6 +67,7 @@ uniform float uBreak[${int(FRUITS)}];
 uniform float uHover[${int(FRUITS)}];
 uniform float uReady[${int(FRUITS)}];
 uniform float uAppear;
+uniform float uSeal;
 `;
 
 /** Rotação de Rodrigues (eixo unitário, ângulo). */
@@ -85,8 +91,10 @@ const DORMANT = glsl`gl_Position = vec4(2.0, 2.0, 2.0, 1.0);`;
 /**
  * O tecido líquido das antigas Fissuras, numa gota pendurada:
  *   vertex    a superfície ondula ao longo da normal com simplex (tecido vivo),
- *             mais forte desperta e sob o cursor; o desabrochar escala a partir
- *             da ponta presa ao caule (o fruto "brota" do caule, não do ar);
+ *             mais forte desperta e sob o cursor; o nascimento cresce a partir
+ *             da ponta presa ao caule: broto fino que ALONGA antes de engordar;
+ *   nascendo  é seiva — a luz dos galhos acumulada na ponta — e amadurece
+ *             na cor do pilar enquanto incha;
  *   fragment  o mesmo líquido das fissuras (fluxo simplex na cor do pilar +
  *             cristas quentes) com uma segunda camada deslocada pelo ângulo de
  *             visão — paralaxe: o líquido tem PROFUNDIDADE dentro da gota —,
@@ -105,17 +113,19 @@ varying vec3 vNormalView;
 varying vec3 vView;
 varying float vDepth;
 void main() {
+  if (uAppear <= 0.0) { ${DORMANT} return; }
   float speed = mix(0.25, 1.0, uUnlock);
   float ripple = snoise(position * 3.2 + vec3(0.0, uTime * 0.9 * speed, uTime * 0.4 * speed)) * (0.012 + 0.03 * uUnlock + 0.03 * uHover);
   vec3 p = position + normal * ripple;
-  // Desabrocha a partir da ponta (presa ao caule).
+  // Nasce da ponta (presa ao caule): o comprimento cresce antes da largura — broto fino, depois fruto cheio.
+  vec3 scale = vec3(mix(0.05, 1.0, pow(uAppear, 1.6)), mix(0.08, 1.0, uAppear), mix(0.05, 1.0, pow(uAppear, 1.6)));
   p.y -= ${float(DROP.top)};
-  p *= uAppear;
+  p *= scale;
   p.y += ${float(DROP.top)};
   vec4 view = modelViewMatrix * vec4(p, 1.0);
   gl_Position = projectionMatrix * view;
   vObject = position;
-  vNormalView = normalize(normalMatrix * normal);
+  vNormalView = normalize(normalMatrix * (normal / scale)); // normal sob escala não uniforme
   vView = view.xyz;
   vDepth = -view.z;
 }
@@ -130,6 +140,7 @@ uniform vec3 uColor;
 uniform float uUnlock;
 uniform float uBreak;
 uniform float uHover;
+uniform float uAppear;
 varying vec3 vObject;
 varying vec3 vNormalView;
 varying vec3 vView;
@@ -158,6 +169,12 @@ void main() {
   vec3 dormant = mix(vec3(dot(uColor, vec3(0.33))), uColor, 0.4);
   vec3 sealed = dormant * (0.05 + 0.1 * saturate(flow)) + dormant * rim * 0.35;
   vec3 color = mix(sealed, liquid + energy, uUnlock) * (1.0 + uHover * 0.35);
+  // Nascendo: seiva pura, a luz dos galhos acumulada na ponta do caule — amadurece enquanto incha.
+  // Volume: miolo translúcido, contorno aceso (a seiva tem corpo, não é um recorte chapado).
+  // O broto pequeno é seiva concentrada: uma gota de luz na ponta do galho, que se dilui ao inchar.
+  vec3 sap = mix(uColor, vec3(1.0), 0.6) * (0.5 + 1.6 * fresnel + 0.6 * saturate(flow) + rim)
+           * (1.0 + 2.5 * (1.0 - smoothstep(0.0, 0.35, uAppear)));
+  color = mix(sap, color, smoothstep(0.05, 0.95, uAppear));
   // O estilhaçar: a gota estoura em branco e assenta na sua cor.
   if (uBreak >= 0.0) color += vec3(1.0) * exp(-uBreak * 4.0) * 5.0;
 
@@ -270,6 +287,8 @@ export class HaloMaterial extends ShaderMaterial {
  *      sentidos alternados) e o ponto dele na gaiola elipsoidal;
  *   2. monta a base (tangente, normal, binormal) e gira os elos ímpares 90°
  *      em torno da tangente — o encadeamento clássico de uma corrente;
+ *   2½. no nascimento do fruto (uSeal), o selo se forja: os elos surgem um a
+ *      um ao redor de cada laço (laços defasados), já na gaiola, em brasa, e esfriam;
  *   3. na explosão, arremessa o elo para fora (velocidade com arrasto
  *      exponencial + gravidade), girando em torno de um eixo aleatório,
  *      incandescente e encolhendo até sumir. Tudo função de (semente, tempo):
@@ -305,7 +324,10 @@ vec3 loopPoint(vec3 n, float theta) {
 void main() {
   int f = int(aLink.x + 0.5);
   float k = uBreak[f];
-  if (k > 3.0 || uAppear <= 0.0) { ${DORMANT} return; }
+  // A forja: ordem do elo ao redor do laço (os laços defasados); since = há quanto (em uSeal) ele surgiu.
+  float since = uSeal * ${float(1 + SEAL_SPAN)} - (aLink.z / ${int(CHAIN.links)}.0 * 0.75 + aLink.y * 0.1);
+  float forged = saturate(since / ${float(SEAL_SPAN)});
+  if (k > 3.0 || forged <= 0.0) { ${DORMANT} return; }
 
   vec3 n = loopNormal(aLink.y, aLink.x);
   float direction = mod(aLink.y, 2.0) < 0.5 ? 1.0 : -1.0;
@@ -319,8 +341,9 @@ void main() {
 
   vec3 local = position;
   vec3 localNormal = normal;
-  vec3 center = uFruitPos[f] + vec3(0.0, ${float(CAGE_CENTER_Y)}, 0.0) + onLoop * uAppear;
-  vHeat = 0.0;
+  vec3 center = uFruitPos[f] + vec3(0.0, ${float(CAGE_CENTER_Y)}, 0.0) + onLoop;
+  local *= forged;
+  vHeat = exp(-since * 5.0); // recém-forjado: em brasa, esfriando
   if (k >= 0.0) {
     vec3 h = hash31(aLink.w * 91.7 + aLink.x * 13.1);
     vec3 fly = normalize(outward * 1.2 + (h - 0.5) * 1.4 + vec3(0.0, 0.4, 0.0));
@@ -329,10 +352,10 @@ void main() {
     mat3 spin = axisRotation(normalize(h * 2.0 - 1.0 + 1e-3), k * (5.0 + h.y * 14.0));
     local = spin * local * (1.0 - smoothstep(1.3, 2.8, k));
     localNormal = spin * localNormal;
-    vHeat = exp(-k * 1.8);
+    vHeat = max(vHeat, exp(-k * 1.8));
   }
 
-  vec4 view = modelViewMatrix * vec4(center + basis * local * uAppear, 1.0);
+  vec4 view = modelViewMatrix * vec4(center + basis * local, 1.0);
   gl_Position = projectionMatrix * view;
   vNormal = normalize(normalMatrix * (basis * localNormal));
   vView = view.xyz;
