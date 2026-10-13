@@ -10,6 +10,7 @@ import { registerDebug } from '@/engine/debug';
 import { useAppStore } from '@/engine/store/useAppStore';
 import { resetTransitionFx } from '../shared/transitions/fxState';
 import { RIFT_HANDOFF, RETURN_HANDOFF } from '../shared/handoff';
+import { BASE_FOV } from '../hub/framing';
 import { CAMERA, DRIVE } from './metropolis/config';
 import { MetropolisDirector } from './metropolis/director';
 import { MetropolisFrame } from './metropolis/frame';
@@ -80,6 +81,8 @@ export default function ArchitectureScene() {
     });
     registerDebug('metropolis', director);
     return () => {
+      // Devolve a lente padrão do motor (a forja termina com o FOV fechado).
+      camera.fov = BASE_FOV;
       camera.near = 0.1;
       camera.updateProjectionMatrix();
       useMetropolis.setState({

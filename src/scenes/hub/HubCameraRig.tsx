@@ -53,6 +53,10 @@ export function HubCameraRig({ framing, director }: { framing: HubFraming; direc
 
   useLayoutEffect(() => {
     const camera = get().camera as PerspectiveCamera;
+    // A lente também é da hub: um reino pode devolver a câmera com outro FOV
+    // (a forja da Seiva termina em ~26°, e a árvore voltava ampliada).
+    camera.fov = BASE_FOV;
+    camera.updateProjectionMatrix();
     camera.position.set(0, framing.cameraY, framing.distance);
     camera.lookAt(0, framing.lookY, 0);
     return () => {
