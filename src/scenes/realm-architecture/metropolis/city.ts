@@ -1,13 +1,14 @@
-import { EdgesGeometry, IcosahedronGeometry } from 'three';
 import { mulberry32 } from '@/engine/lib/random';
-import { BUILD, TUNNEL } from './config';
+import { BUILD, cameraZ, reachAt, span, TUNNEL } from './config';
+import { inLandmarkZone, LANDMARKS, landmarkToWorld, landmarkWindow } from './landmarks';
+import type { Pen } from './lineart';
 
 /**
  * A Metrópole Abstrata — gerada uma vez na CPU, determinística (mesma
  * semente, mesma cidade). Só LINHAS e PONTOS: torres em wireframe crescendo
  * do chão e pendendo do teto, pontes de luz sobre o corredor, cabos de dados,
- * trilhas de circuito no chão e no teto, pórticos do túnel e, no fim, um
- * núcleo geodésico perfeitamente simétrico.
+ * trilhas de circuito no chão e no teto e os pórticos do túnel. No fim da
+ * jornada, o coração (heart.ts).
  *
  * Cada segmento carrega a sua JANELA DE CONSTRUÇÃO (início, duração) em
  * unidades de progresso do scroll; o vertex shader "desenha" o segmento da
@@ -21,7 +22,7 @@ import { BUILD, TUNNEL } from './config';
  * continuam simétricos: são o chão comum das duas metades da arquitetura.
  */
 
-export const KIND = { tower: 0, ring: 1, arc: 2, trace: 3, core: 4, frame: 5 } as const;
+export const KIND = { tower: 0, ring: 1, arc: 2, trace: 3, core: 4, frame: 5, landmark: 6 } as const;
 
 type V3 = [number, number, number];
 type XZ = [number, number];
@@ -30,10 +31,7 @@ const F = TUNNEL.floor;
 const C = TUNNEL.ceiling;
 export const CORE_CENTER: V3 = [0, (F + C) / 2, TUNNEL.start - TUNNEL.length - TUNNEL.coreGap];
 
-/** Progresso em que a câmera alcança o plano `z`. */
-export const reachAt = (z: number) => (TUNNEL.start - z) / TUNNEL.length;
-/** Posição Z da câmera no progresso `p`. */
-export const cameraZ = (p: number) => TUNNEL.start - p * TUNNEL.length;
+export { cameraZ, reachAt };
 
 export interface CityData {
   lines: { position: Float32Array; from: Float32Array; time: Float32Array; meta: Float32Array; count: number };
@@ -76,9 +74,9 @@ function* cityGenerator(): Generator<void, CityData> {
 
   /** Janela de uma peça em z: nasce `lookahead` à frente da câmera; os arredores imediatos, nos primeiros giros. */
   const windowAt = (z: number): [number, number] => {
-    const dur = range(0.035, 0.085);
-    let start = reachAt(z) - BUILD.lookahead + rng() * 0.05;
-    start = Math.max(start, 0.004 + rng() * 0.07);
+    const dur = range(span(2.2), span(5.4));
+    let start = reachAt(z) - BUILD.lookahead + rng() * span(3.2);
+    start = Math.max(start, 0.004 + rng() * span(4.5));
     return [Math.min(start, 0.975 - dur), dur];
   };
   /** Sub-janela `s` (0..1) dentro da janela da peça. */
@@ -340,7 +338,8 @@ function* cityGenerator(): Generator<void, CityData> {
 
   const zEnd = CORE_CENTER[2] - 4;
   const rows: number[] = [];
-  for (let z = TUNNEL.start + 5; z > zEnd; z -= range(0.9, 1.8)) rows.push(z);
+  // Espaçadas: a cidade genérica abre espaço para os monumentos (landmarks.ts).
+  for (let z = TUNNEL.start + 5; z > zEnd; z -= range(1.2, 2.2)) rows.push(z);
 
   const mirrored = (emit: (side: number) => void) => {
     emit(1);
@@ -353,7 +352,7 @@ function* cityGenerator(): Generator<void, CityData> {
     for (const side of [-1, 1] as const) {
       const district = side < 0 ? LEFT : RIGHT;
       // Perto do corredor: 1–2 construções por lado, do chão ou do teto.
-      const near = rng() < 0.55 ? 2 : 1;
+      const near = rng() < 0.4 ? 2 : 1;
       let edge = BUILD.corridor + 0.25;
       for (let k = 0; k < near; k++) {
         const hanging = rng() < 0.35;
@@ -361,15 +360,32 @@ function* cityGenerator(): Generator<void, CityData> {
         const x = edge + piece.reach + rng() * 0.6;
         edge = x + piece.reach + range(0.5, 1.2);
         const h = hanging ? range(0.4, 1.7) : range(0.5, 3.2);
-        piece.emit({ x: side * x, z: z + range(-0.3, 0.3), base: hanging ? C : F, dir: hanging ? -1 : 1, h });
+        const zz = z + range(-0.3, 0.3);
+        if (!inLandmarkZone(side, zz)) piece.emit({ x: side * x, z: zz, base: hanging ? C : F, dir: hanging ? -1 : 1, h });
       }
-      // Ao longe: construções altas.
-      if (rng() < 0.7) {
+      // Ao longe: construções altas (sem disputar a silhueta de um monumento).
+      if (rng() < 0.5) {
         const piece = pick(district.far);
         const x = Math.max(range(5.6, BUILD.width), edge + piece.reach);
-        piece.emit({ x: side * x, z: z + range(-0.5, 0.5), base: F, dir: 1, h: range(1.6, C - F - 0.2) });
+        const zz = z + range(-0.5, 0.5);
+        if (!inLandmarkZone(side, zz, 0.4)) piece.emit({ x: side * x, z: zz, base: F, dir: 1, h: range(1.6, C - F - 0.2) });
       }
     }
+  }
+
+  yield;
+  // ── Os monumentos: cada um na janela da peça inteira (ou acompanhando a câmera, se `follows`) ──
+  for (const landmark of LANDMARKS) {
+    const [start, dur] = landmarkWindow(landmark);
+    const pen: Pen = (a, b, order) => {
+      const wa = landmarkToWorld(landmark, a);
+      const wb = landmarkToWorld(landmark, b);
+      if (landmark.follows) {
+        const s = Math.max(0.004, reachAt(Math.max(wa[2], wb[2])) - BUILD.lookahead);
+        build.seg(wa, wb, Math.min(s, 0.96), span(1.9), KIND.trace);
+      } else build.seg(wa, wb, start + order * dur * 0.8, Math.max(0.006, dur * 0.22), KIND.landmark);
+    };
+    landmark.shape(pen);
   }
 
   yield;
@@ -450,39 +466,6 @@ function* cityGenerator(): Generator<void, CityData> {
       }
     });
   }
-
-  yield;
-  // ── O núcleo: geodésicas concêntricas, três grandes círculos e raios ──
-  const [cx, cy, cz] = CORE_CENTER;
-  const core = (vertices: Float32Array, radius: number, start: number, dur: number) => {
-    for (let i = 0; i < vertices.length; i += 6) {
-      const a: V3 = [cx + vertices[i] * radius, cy + vertices[i + 1] * radius, cz + vertices[i + 2] * radius];
-      const b: V3 = [cx + vertices[i + 3] * radius, cy + vertices[i + 4] * radius, cz + vertices[i + 5] * radius];
-      const s = start + rng() * dur * 0.7;
-      build.seg(a, b, s, dur * 0.3, KIND.core);
-    }
-  };
-  const edgesOf = (detail: number) => {
-    const ico = new IcosahedronGeometry(1, detail);
-    const edges = new EdgesGeometry(ico, 1);
-    const array = (edges.getAttribute('position').array as Float32Array).slice();
-    ico.dispose();
-    edges.dispose();
-    return array;
-  };
-  core(edgesOf(1), 1.15, 0.8, 0.12);
-  core(edgesOf(0), 1.8, 0.86, 0.1);
-  const CIRCLE = 64;
-  for (let axis = 0; axis < 3; axis++)
-    for (let i = 0; i < CIRCLE; i++) {
-      const at = (k: number): V3 => {
-        const angle = (k / CIRCLE) * Math.PI * 2;
-        const u = Math.cos(angle) * 1.5;
-        const v = Math.sin(angle) * 1.5;
-        return axis === 0 ? [cx + u, cy + v, cz] : axis === 1 ? [cx, cy + u, cz + v] : [cx + u, cy, cz + v];
-      };
-      build.seg(at(i), at(i + 1), 0.9 + (i / CIRCLE) * 0.07 + axis * 0.004, 0.01, KIND.core);
-    }
 
   yield;
   // ── Partículas: as que montam a cidade e a poeira de dados do túnel ──

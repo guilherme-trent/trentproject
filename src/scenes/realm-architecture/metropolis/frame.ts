@@ -1,14 +1,50 @@
 import { MathUtils, Vector2, Vector3, type Group, type PerspectiveCamera } from 'three';
 import { progress, smoothstep } from '@/engine/lib/time';
-import { baseFov, BUILD, FORGE, PHRASES, TIMING, TUNNEL } from './config';
+import { baseFov, BUILD, FORGE, PHRASES, span, TIMING, TUNNEL } from './config';
 import { cameraZ, CORE_CENTER } from './city';
 import type { MetropolisDirector } from './director';
 import type { MetropolisKit } from './kit';
 import type { ForgeFrame, ParticleForge } from './forge';
 import { terminalLayout } from './terminal';
+import { LANDMARKS, landmarkToWorld, landmarkWindow } from './landmarks';
+import { LABEL_IDS, type LabelId } from './labels';
+import { Traffic, VEHICLES, type VehicleId } from './vehicles';
+import { Heartbeat } from './heartbeat';
+
+/** Nome de uma obra fixa: onde flutua e quando a obra termina de se montar. */
+interface StaticLabel {
+  index: number;
+  anchor: Vector3;
+  builtAt: number;
+}
+const STATIC_LABELS: StaticLabel[] = LANDMARKS.flatMap((landmark) => {
+  if (!landmark.label) return [];
+  const [start, dur] = landmarkWindow(landmark);
+  return [{ index: LABEL_IDS.indexOf(landmark.label.id as LabelId), anchor: new Vector3(...landmarkToWorld(landmark, landmark.label.anchor)), builtAt: start + dur }];
+});
+/** O nome de cada veículo acompanha o veículo, deslocado para o lado do corredor. */
+const VEHICLE_LABEL_OFFSET: Record<VehicleId, [number, number, number]> = {
+  saturn: [0.75, 0.75, 0],
+  iss: [0.9, -0.6, 0],
+  bis: [0, -0.6, 0],
+  concorde: [-0.3, -0.45, 0],
+  shinkansen: [-0.6, 0.75, 0],
+};
+/**
+ * Um nome aparece entre 16 e ~3 unidades à frente da câmera e se apaga ao passar
+ * por ela. O de um veículo se apaga antes (`near` maior): ele cresce rápido na
+ * tela quando o veículo passa perto.
+ */
+const labelWindow = (ahead: number, near = 1.5) => smoothstep(near, near + 2, ahead) * (1 - smoothstep(13, 16, ahead));
+
+/**
+ * O coração (a 11 unidades do fim): a cidade começa a esquentar a ~36
+ * unidades dele (`heat`) e ele se monta entre ~32 e ~16 unidades (`reveal`).
+ */
+const HEART = { heat: [1 - span(25), 1 - span(1)] as const, reveal: [1 - span(21), 1 - span(5)] as const };
 
 /** Distância (em progresso) entre o acender de um trecho e a câmera alcançá-lo. */
-const PHRASE_LEAD = 0.09;
+const PHRASE_LEAD = span(5.76);
 
 /**
  * O maestro de uniforms: a cada frame traduz o diretor em câmera e nos
@@ -35,13 +71,25 @@ export class MetropolisFrame {
     bounds: new Vector3(),
   };
   private readonly lastAttractor = new Vector3();
+  /** As passagens dos veículos (cada quadro guarda as suas: o reino e a prévia pela fissura). */
+  private readonly traffic = new Traffic();
+  private readonly heartbeat: Heartbeat;
+  private lastTime = -1;
   private readonly origin = new Vector2();
   private seeded = false;
 
+  /** `audible`: o reino toca o batimento; a prévia pela fissura (preview.ts), não. */
   constructor(
     private readonly kit: MetropolisKit,
     private readonly director: MetropolisDirector,
-  ) {}
+    audible = true,
+  ) {
+    this.heartbeat = new Heartbeat(audible);
+  }
+
+  dispose() {
+    this.heartbeat.dispose();
+  }
 
   sync(camera: PerspectiveCamera, root: Group | null, aspect: number, pixelHeight: number) {
     const { kit, director: d } = this;
@@ -53,8 +101,10 @@ export class MetropolisFrame {
     // ── Câmera: avança no túnel, com balanço suave, paralaxe e FOV de velocidade ──
     const z = cameraZ(p);
     const shake = d.shake * 0.05;
-    const x = Math.sin(p * 9.4) * 0.22 + d.pointer.x * 0.12 + (Math.random() - 0.5) * shake;
-    const y = TUNNEL.eye + Math.sin(p * 6.1) * 0.08 + d.pointer.y * 0.06 + (Math.random() - 0.5) * shake;
+    // Balanço pela distância percorrida (não pelo progresso: o ritmo independe do comprimento do túnel).
+    const travel = p * TUNNEL.length;
+    const x = Math.sin(travel * 0.147) * 0.22 + d.pointer.x * 0.12 + (Math.random() - 0.5) * shake;
+    const y = TUNNEL.eye + Math.sin(travel * 0.095) * 0.08 + d.pointer.y * 0.06 + (Math.random() - 0.5) * shake;
     camera.position.set(x, y, z);
     camera.lookAt(x * 0.4, TUNNEL.eye - 0.02, z - 8);
     const fov = baseFov(aspect) + MathUtils.clamp(Math.abs(d.velocity) * 45, 0, 9);
@@ -67,10 +117,23 @@ export class MetropolisFrame {
     const since = d.pulseAt >= 0 ? d.time - d.pulseAt : -1;
     const pulse = since >= 0 ? since * 26 : 0;
     const pulseAmp = since >= 0 ? smoothstep(0, 0.15, since) * (1 - smoothstep(0.6, TIMING.pulse, since)) : 0;
-    for (const material of [kit.surfaces.material, kit.lines.material, kit.points.material]) {
+    // ── O coração: anuncia-se de longe (a cidade esquenta), monta-se de dentro para fora e bate ──
+    const dt = this.lastTime < 0 ? 0 : Math.max(0, Math.min(0.1, time - this.lastTime));
+    this.lastTime = time;
+    const heat = smoothstep(HEART.heat[0], HEART.heat[1], p);
+    // O som cala de uma vez quando o sinal é invadido (a falha), e só toca na jornada.
+    this.heartbeat.update(dt, heat, d.stage === 'journey' || d.stage === 'climax');
+    const heart = kit.heart.material.uniforms;
+    heart.uReveal.value = progress(p, HEART.reveal[0], HEART.reveal[1]) * 1.12;
+    heart.uWave.value = this.heartbeat.wave;
+    heart.uTime.value = time;
+    heart.uGlitch.value = glitch;
+    for (const material of [kit.surfaces.material, kit.lines.material, kit.points.material, kit.traffic.material, kit.labels.material, kit.heart.material]) {
       material.uniforms.uCore.value.set(...CORE_CENTER);
       material.uniforms.uPulse.value = pulse;
       material.uniforms.uPulseAmp.value = pulseAmp;
+      material.uniforms.uHeat.value = heat;
+      material.uniforms.uBeat.value = this.heartbeat.beat;
     }
 
     // ── Espelhos ──
@@ -93,6 +156,28 @@ export class MetropolisFrame {
     points.uGlitch.value = glitch;
     points.uPixelScale.value = pixelHeight / (2 * Math.tan((camera.fov * Math.PI) / 360));
 
+    // ── Veículos e nomes das obras ──
+    const traffic = this.traffic;
+    traffic.update(p, time);
+    const vehicles = kit.traffic.material.uniforms;
+    vehicles.uTime.value = time;
+    vehicles.uGlitch.value = glitch;
+    vehicles.uFlame.value = traffic.flame;
+    const labels = kit.labels.material.uniforms;
+    labels.uTime.value = time;
+    labels.uGlitch.value = glitch;
+    VEHICLES.forEach((id, i) => {
+      const { position, rotation, alpha } = traffic.states[id];
+      vehicles.uPose.value[i].set(position.x, position.y, position.z, alpha);
+      vehicles.uTurn.value[i].set(rotation.x, rotation.y, rotation.z, rotation.w);
+      const [ox, oy, oz] = VEHICLE_LABEL_OFFSET[id];
+      labels.uAnchor.value[LABEL_IDS.indexOf(id)].set(position.x + ox, position.y + oy, position.z + oz, alpha * labelWindow(z - position.z, 4));
+    });
+    for (const { index, anchor, builtAt } of STATIC_LABELS) {
+      const built = smoothstep(builtAt - span(0.25), builtAt + span(0.8), p);
+      labels.uAnchor.value[index].set(anchor.x, anchor.y, anchor.z, built * labelWindow(z - anchor.z));
+    }
+
     // ── Manifesto ──
     kit.phrases.atlas.layout(aspect < 0.9);
     const phrases = kit.phrases.material.uniforms;
@@ -107,7 +192,7 @@ export class MetropolisFrame {
       phrases.uCenter.value[i].set(0, TUNNEL.eye + 0.12, textZ);
       phrases.uSize.value[i].set(width, width * block.aspect);
       phrases.uRect.value[i].set(...block.rect);
-      phrases.uReveal.value[i] = progress(p, phrase.at - 0.035, phrase.at + 0.012);
+      phrases.uReveal.value[i] = progress(p, phrase.at - span(2.24), phrase.at + span(0.77));
       phrases.uFade.value[i] = smoothstep(0.35, 2.4, z - textZ);
     });
 

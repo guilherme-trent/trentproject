@@ -54,6 +54,8 @@ export default function ArchitectureScene() {
     return created;
   });
   const [frame] = useState(() => new MetropolisFrame(kit, director));
+  // O som do coração não sobrevive à cena.
+  useEffect(() => () => frame.dispose(), [frame]);
   const gl = useThree((state) => state.gl);
   // A forja já vem aquecida da hub; chegando sem warmup, nasce aqui (uma vez por kit).
   const [forge] = useState(() => ensureForge(kit, gl));
@@ -194,6 +196,9 @@ export default function ArchitectureScene() {
         <lineSegments geometry={kit.lines.geometry} material={kit.lines.material} renderOrder={1} frustumCulled={false} />
         <points geometry={kit.points.geometry} material={kit.points.material} renderOrder={2} frustumCulled={false} />
         <mesh geometry={kit.phrases.geometry} material={kit.phrases.material} renderOrder={3} frustumCulled={false} />
+        <lineSegments geometry={kit.traffic.geometry} material={kit.traffic.material} renderOrder={1} frustumCulled={false} />
+        <lineSegments geometry={kit.heart.geometry} material={kit.heart.material} renderOrder={1} frustumCulled={false} />
+        <mesh geometry={kit.labels.geometry} material={kit.labels.material} renderOrder={3} frustumCulled={false} />
       </group>
       {/* A Etapa 2 vive fora do túnel (que some na falha). */}
       <primitive object={forge.trails} dispose={null} />

@@ -25,7 +25,7 @@ export class RiftPreview {
 
   constructor(gl: WebGLRenderer) {
     const kit = acquireMetropolisKit();
-    this.frame = new MetropolisFrame(kit, this.director);
+    this.frame = new MetropolisFrame(kit, this.director, false); // pela fenda, o coração não soa
     const objects = [
       Object.assign(new Mesh(kit.surfaces.geometry, kit.surfaces.material), { renderOrder: -10 }),
       Object.assign(new LineSegments(kit.lines.geometry, kit.lines.material), { renderOrder: 1 }),

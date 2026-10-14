@@ -5,7 +5,19 @@
  * `start` até `start − length` no eixo Z conforme o scroll. O núcleo
  * simétrico espera no fim, `coreGap` à frente da câmera.
  */
-export const TUNNEL = { floor: -1.8, ceiling: 2.2, eye: 0.2, start: 4, length: 64, coreGap: 11 } as const;
+export const TUNNEL = { floor: -1.8, ceiling: 2.2, eye: 0.2, start: 4, length: 96, coreGap: 11 } as const;
+
+/**
+ * Uma distância da jornada (unidades de mundo) em progresso. Durações e
+ * folgas são escritas em UNIDADES (o quanto a câmera anda), não em progresso:
+ * assim o túnel pode crescer sem que nada mude de ritmo.
+ */
+export const span = (units: number) => units / TUNNEL.length;
+
+/** Progresso em que a câmera alcança o plano `z`. */
+export const reachAt = (z: number) => (TUNNEL.start - z) / TUNNEL.length;
+/** Posição Z da câmera no progresso `p`. */
+export const cameraZ = (p: number) => TUNNEL.start - p * TUNNEL.length;
 
 export const CAMERA = { fov: 55, portraitFov: 76, near: 0.05, far: 100 } as const;
 
@@ -21,10 +33,10 @@ export const baseFov = (aspect: number) => CAMERA.fov + (CAMERA.portraitFov - CA
  *   brake      taxa ao soltar (um pouco mais firme: para sem escorregar)
  *   dragRange  arraste (em alturas de tela) para o acelerador chegar ao fundo
  */
-export const DRIVE = { maxSpeed: 0.058, accel: 2.2, brake: 3.2, dragRange: 0.14, dragDead: 0.012 } as const;
+export const DRIVE = { maxSpeed: span(3.7), accel: 2.2, brake: 3.2, dragRange: 0.14, dragDead: 0.012 } as const;
 
 /** A metrópole se constrói este tanto de progresso À FRENTE da câmera. */
-export const BUILD = { lookahead: 0.16, corridor: 1.35, width: 11 } as const;
+export const BUILD = { lookahead: span(10.24), corridor: 1.35, width: 11 } as const;
 
 /**
  * Cópias espelhadas (reflexão planar exata por geometria): original, reflexo

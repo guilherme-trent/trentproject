@@ -17,7 +17,10 @@ import { createFullscreenTriangle } from '@/shaders/fullscreen';
 import { PulseWipeMaterial } from '../../shared/PulseWipeMaterial';
 import { PHRASES } from './config';
 import { getCity, prepareCity } from './city';
-import { CityLinesMaterial, CityPointsMaterial, LandingMaterial, MirrorSurfaceMaterial, MIRROR_COUNT, PHRASE_MIRRORS, PhraseMaterial } from './materials';
+import { CityLinesMaterial, CityPointsMaterial, HeartMaterial, LabelMaterial, LandingMaterial, MirrorSurfaceMaterial, MIRROR_COUNT, PHRASE_MIRRORS, PhraseMaterial, VehicleMaterial } from './materials';
+import { LABEL_IDS, LabelAtlas, loadLabelFonts } from './labels';
+import { createTrafficGeometry, VEHICLES } from './vehicles';
+import { createHeartGeometry } from './heart';
 import { PhraseAtlas } from './phrases';
 import { OverlayRenderer } from './overlay';
 import { ParticleForge } from './forge';
@@ -25,14 +28,21 @@ import { ParticleForge } from './forge';
 /**
  * Todos os recursos de GPU da Metrópole, como objetos three.js puros:
  * aquecidos durante a hub (o colapso de tinta dura ~2,6s), adotados pela
- * cena. Draw calls: 2 espelhos (1 instanciado), cidade em linhas (1 × 5
- * cópias), partículas (1 × 5), manifesto (1 × 12), véu — 5 no total.
+ * cena. Draw calls: 2 espelhos (1 instanciado), cidade em linhas com os
+ * monumentos (1 × 5 cópias), partículas (1 × 5), manifesto (1 × 12),
+ * veículos (1 × 5), nomes das obras (1 × 20), o coração (1 × 3), véu — 8 no total.
  */
 export interface MetropolisKit {
   surfaces: { geometry: InstancedBufferGeometry; material: MirrorSurfaceMaterial };
   lines: { geometry: InstancedBufferGeometry; material: CityLinesMaterial };
   points: { geometry: InstancedBufferGeometry; material: CityPointsMaterial };
   phrases: { geometry: InstancedBufferGeometry; material: PhraseMaterial; atlas: PhraseAtlas };
+  /** Os veículos que passam (vehicles.ts): uma geometria, posicionada no shader. */
+  traffic: { geometry: InstancedBufferGeometry; material: VehicleMaterial };
+  /** O coração, no fim da jornada (heart.ts). */
+  heart: { geometry: InstancedBufferGeometry; material: HeartMaterial };
+  /** Os nomes das obras (labels.ts). */
+  labels: { geometry: InstancedBufferGeometry; material: LabelMaterial; atlas: LabelAtlas };
   /** O pouso: a luz da fissura se dissipando sobre o túnel (triângulo de tela cheia, compartilhado com o pulso). */
   veil: { geometry: BufferGeometry; material: LandingMaterial };
   /** A saída: o pulso de luz que cobre a tela (a hub renasce do mesmo pulso). */
@@ -69,6 +79,22 @@ export function createMetropolisKit(): MetropolisKit {
   const atlas = new PhraseAtlas();
   atlas.layout(window.innerWidth / window.innerHeight < 0.9);
 
+  const trafficData = createTrafficGeometry();
+  const traffic = new InstancedBufferGeometry();
+  traffic.setAttribute('position', new BufferAttribute(trafficData.position, 3));
+  traffic.setAttribute('aVehicle', new BufferAttribute(trafficData.vehicle, 2));
+  traffic.instanceCount = MIRROR_COUNT;
+
+  const heartData = createHeartGeometry();
+  const heart = new InstancedBufferGeometry();
+  heart.setAttribute('position', new BufferAttribute(heartData.position, 3));
+  heart.setAttribute('aHeart', new BufferAttribute(heartData.heart, 4));
+  heart.instanceCount = 3; // original + reflexo no chão e no teto (sem os de 2ª ordem)
+
+  const labelAtlas = new LabelAtlas();
+  const labelMaterial = new LabelMaterial(labelAtlas.texture, LABEL_IDS.length);
+  LABEL_IDS.forEach((id, i) => labelMaterial.uniforms.uRect.value[i].set(...labelAtlas.rects[id]));
+
   return {
     surfaces: { geometry: instanced(new PlaneGeometry(1, 1), 2), material: new MirrorSurfaceMaterial() },
     lines: { geometry: lines, material: new CityLinesMaterial() },
@@ -78,6 +104,9 @@ export function createMetropolisKit(): MetropolisKit {
       material: new PhraseMaterial(atlas.texture),
       atlas,
     },
+    traffic: { geometry: traffic, material: new VehicleMaterial(VEHICLES.length) },
+    heart: { geometry: heart, material: new HeartMaterial() },
+    labels: { geometry: instanced(new PlaneGeometry(1, 1), LABEL_IDS.length), material: labelMaterial, atlas: labelAtlas },
     veil: { geometry: createFullscreenTriangle(), material: new LandingMaterial() },
     pulse: { material: new PulseWipeMaterial(false) },
     overlay: new OverlayRenderer(),
@@ -92,6 +121,7 @@ const nextFrame = () => new Promise<void>((resolve) => requestAnimationFrame(() 
 export async function warmMetropolisKit({ gl, camera }: WarmupContext) {
   if (current) return;
   await document.fonts?.ready; // o atlas do manifesto precisa da fonte real
+  await loadLabelFonts(); // e o dos nomes, as duas fontes dele (serifa itálica e mono)
   // CPU em frames separados: gerar a cidade e desenhar o atlas juntos custavam ~85 ms num frame da hub.
   await prepareCity();
   await nextFrame();
@@ -104,6 +134,9 @@ export async function warmMetropolisKit({ gl, camera }: WarmupContext) {
     named(new LineSegments(kit.lines.geometry, kit.lines.material), 'metropolis-lines'),
     named(new Points(kit.points.geometry, kit.points.material), 'metropolis-points'),
     named(new Mesh(kit.phrases.geometry, kit.phrases.material), 'metropolis-phrases'),
+    named(new LineSegments(kit.traffic.geometry, kit.traffic.material), 'metropolis-traffic'),
+    named(new LineSegments(kit.heart.geometry, kit.heart.material), 'metropolis-heart'),
+    named(new Mesh(kit.labels.geometry, kit.labels.material), 'metropolis-labels'),
     named(new Mesh(kit.veil.geometry, kit.veil.material), 'metropolis-landing'),
     named(new Mesh(kit.veil.geometry, kit.pulse.material), 'metropolis-pulse'),
   ];

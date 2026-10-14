@@ -1,6 +1,6 @@
 import { Vector2 } from 'three';
 import { useProgressStore } from '@/engine/store/useProgressStore';
-import { DRIVE, FORGE, INTERCEPT, RESONANCE, SHATTER, TIMING } from './config';
+import { DRIVE, FORGE, INTERCEPT, RESONANCE, SHATTER, span, TIMING } from './config';
 import { useMetropolis } from './store';
 
 /**
@@ -28,8 +28,9 @@ export type MetropolisStage =
   | 'relic'
   | 'exit';
 
-const CLIMAX_AT = 0.993;
-const CLIMAX_RELEASE = 0.965;
+/** O clímax: a 0,45 unidade do fim (e solta ao recuar 2,2 unidades). */
+const CLIMAX_AT = 1 - span(0.45);
+const CLIMAX_RELEASE = 1 - span(2.24);
 const clamp = (x: number, min: number, max: number) => Math.min(max, Math.max(min, x));
 
 export class MetropolisDirector {

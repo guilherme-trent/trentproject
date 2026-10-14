@@ -1,10 +1,12 @@
 import { AddEquation, AdditiveBlending, CustomBlending, DoubleSide, OneFactor, OneMinusSrcAlphaFactor, ShaderMaterial, Vector2, Vector3, Vector4, type Texture } from 'three';
-import { glsl, int, vec3 } from '@/shaders/glsl';
+import { float, glsl, int, vec3 } from '@/shaders/glsl';
 import { commonChunk } from '@/shaders/chunks/common.glsl';
 import { noiseChunk } from '@/shaders/chunks/noise.glsl';
 import { FLOOD_LIGHT } from '../../shared/flood';
 import { PALETTE } from '../../shared/palette';
 import { MIRRORS, PHRASES, TUNNEL } from './config';
+import { NOZZLE_Y } from './vehicles';
+import { HEART_TILT } from './heart';
 
 /**
  * Os materiais da Metrópole. Princípios de custo:
@@ -59,6 +61,20 @@ float pulseAt(vec3 p) {
   return uPulseAmp * (exp(-d * d * 0.9) + 0.25 * exp(-abs(d) * 0.35) * step(d, 0.0));
 }
 
+/**
+ * A presença do coração (uCore): perto dele a cidade ESQUENTA (o esmeralda
+ * cede ao âmbar) e pulsa no ritmo das batidas. uHeat = o quanto ele já se
+ * anuncia (0 longe … 1 diante dele); uBeat = o envelope da batida agora.
+ */
+uniform float uHeat;
+uniform float uBeat;
+vec3 heartWarmth(vec3 color, vec3 p) {
+  if (uHeat <= 0.0) return color;
+  float near = uHeat * exp(-max(0.0, distance(p, uCore) - 2.5) * 0.075);
+  vec3 warm = vec3(dot(color, vec3(0.35, 0.5, 0.15))) * vec3(1.75, 0.62, 0.3);
+  return mix(color, warm, near * 0.75) * (1.0 + uBeat * near * 0.4);
+}
+
 /** O vazio engole a distância (e o que está colado na lente). */
 float tunnelFog(float dist) {
   return exp(-dist * dist * 0.0011) * smoothstep(0.05, 0.6, dist);
@@ -73,6 +89,8 @@ const tunnelUniforms = () => ({
   uCore: { value: new Vector3() },
   uPulse: { value: 0 },
   uPulseAmp: { value: 0 },
+  uHeat: { value: 0 },
+  uBeat: { value: 0 },
 });
 const LIGHT = { transparent: true, depthTest: false, depthWrite: false, blending: AdditiveBlending } as const;
 
@@ -128,6 +146,7 @@ export class MirrorSurfaceMaterial extends ShaderMaterial {
           color += mix(${EMERALD}, vec3(0.8, 1.0, 0.95), 0.4) * (major * 0.9 + lane * 1.6 + 0.04) * surge;
           float wave = pulseAt(vec3(vWorld.x, uCore.y, vWorld.z));
           color += ${EMERALD} * (major * 2.2 + minor * 0.5 + 0.06) * wave;
+          color = heartWarmth(color, vWorld);
           color *= tunnelFog(dist) * (1.0 - 0.6 * uGlitch * step(0.85, hash11(floor(uTime * 14.0))));
           gl_FragColor = vec4(color, 1.0);
           ${OUTPUT}
@@ -186,11 +205,12 @@ export class CityLinesMaterial extends ShaderMaterial {
             kind < 2.5 ? vec3(0.55, 1.0, 0.92) * 0.55 :
             kind < 3.5 ? ${EMERALD} * 0.38 :
             kind < 4.5 ? vec3(0.85, 1.0, 0.92) * 0.9 :
-                         vec3(0.65, 0.9, 0.85) * 0.42;
+            kind < 5.5 ? vec3(0.65, 0.9, 0.85) * 0.42 :
+                         vec3(0.72, 1.0, 0.9) * 0.5; // monumento: um tom acima da cidade, para se destacar
           float head = (1.0 - t) * 2.4;
           float gain = uMirror[gl_InstanceID].z * tunnelFog(length(view.xyz));
           float wave = pulseAt(p);
-          vColor = (base * (1.0 + wave * 5.0) + vec3(1.0) * head + vec3(0.75, 1.0, 0.92) * wave * 2.2) * gain;
+          vColor = heartWarmth(base * (1.0 + wave * 5.0) + vec3(1.0) * head + vec3(0.75, 1.0, 0.92) * wave * 2.2, p) * gain;
           vPulse = (kind > 1.5 && kind < 2.5 ? 1.0 : 0.0) * gain * t;
           vAlong = aMeta.y + aTime.x * 13.0;
         }`,
@@ -249,7 +269,7 @@ export class CityPointsMaterial extends ShaderMaterial {
           gl_PointSize = clamp((dust ? 0.016 : 0.022) * (1.0 + flight * 1.5) * uPixelScale / dist, 1.0, 7.0);
           float gain = uMirror[gl_InstanceID].z * tunnelFog(dist) * (dust ? t * 0.55 : 1.0);
           float twinkle = 0.7 + 0.3 * sin(uTime * 3.0 + aSeed * 90.0);
-          vColor = (mix(${EMERALD}, vec3(1.0), dust ? 0.3 : 0.5 + 0.5 * flight) * (0.5 + flight * 2.0) * twinkle) * gain * (1.0 + pulseAt(p) * 4.0);
+          vColor = heartWarmth(mix(${EMERALD}, vec3(1.0), dust ? 0.3 : 0.5 + 0.5 * flight) * (0.5 + flight * 2.0) * twinkle, p) * gain * (1.0 + pulseAt(p) * 4.0);
         }`,
       fragmentShader: glsl`
         varying vec3 vColor;
@@ -332,6 +352,197 @@ export class PhraseMaterial extends ShaderMaterial {
         uReveal: { value: new Array<number>(n).fill(0) },
         uFade: { value: new Array<number>(n).fill(0) },
       },
+      ...LIGHT,
+    });
+  }
+}
+
+// ── Os veículos ──────────────────────────────────────────────────────────────
+
+/**
+ * Todos os veículos numa geometria só (vehicles.ts): cada linha sabe de qual
+ * veículo é e o seu estilo. Por veículo, um vec4 de posição (w = visibilidade)
+ * e um quatérnio — a CPU escreve 10 vec4 por frame. A chama do Saturn V
+ * estica e tremeluz no shader. Recorte no chão e no teto: o foguete some ao
+ * atravessar o teto e a chama "bate" no chão espelhado.
+ */
+export class VehicleMaterial extends ShaderMaterial {
+  constructor(count: number) {
+    super({
+      vertexShader: glsl`
+        ${tunnelChunk}
+        attribute vec2 aVehicle; // x: veículo · y: estilo (0 casco, 1 detalhe, 2 chama)
+        uniform vec4 uPose[${int(count)}];
+        uniform vec4 uTurn[${int(count)}];
+        uniform float uFlame;
+        varying vec3 vColor;
+
+        vec3 turn(vec4 q, vec3 v) { return v + 2.0 * cross(q.xyz, cross(q.xyz, v) + q.w * v); }
+
+        void main() {
+          int id = int(aVehicle.x + 0.5);
+          vec4 pose = uPose[id];
+          bool flame = aVehicle.y > 1.5;
+          if (pose.w <= 0.001 || (flame && uFlame <= 0.001)) { ${DORMANT} }
+          vec3 local = position;
+          float flicker = 1.0;
+          if (flame) {
+            flicker = 0.75 + 0.25 * sin(uTime * 47.0 + position.x * 91.0 + position.z * 67.0);
+            local.y = ${float(NOZZLE_Y)} + (local.y - ${float(NOZZLE_Y)}) * uFlame * flicker;
+          }
+          vec3 p = pose.xyz + turn(uTurn[id], local);
+          float clip = smoothstep(${float(TUNNEL.floor - 0.25)}, ${float(TUNNEL.floor + 0.02)}, p.y) * (1.0 - smoothstep(${float(TUNNEL.ceiling - 0.4)}, ${float(TUNNEL.ceiling)}, p.y));
+          vec3 world = glitchShift(mirrorOf(p, gl_InstanceID));
+          vec4 view = modelViewMatrix * vec4(world, 1.0);
+          gl_Position = projectionMatrix * view;
+          vec3 base = aVehicle.y < 0.5 ? vec3(0.78, 1.0, 0.94) * 0.62 : flame ? vec3(1.0, 0.55, 0.22) * 1.6 * flicker : ${EMERALD} * 0.32 + vec3(0.06);
+          vColor = base * pose.w * clip * uMirror[gl_InstanceID].z * tunnelFog(length(view.xyz));
+        }`,
+      fragmentShader: glsl`
+        uniform float uGlitch;
+        varying vec3 vColor;
+        void main() {
+          vec3 color = mix(vColor, vec3(vColor.g * 1.4, vColor.r * 0.2, vColor.b * 0.3), uGlitch * 0.6);
+          gl_FragColor = vec4(color, 1.0);
+          ${OUTPUT}
+        }`,
+      uniforms: {
+        ...tunnelUniforms(),
+        uPose: { value: Array.from({ length: count }, () => new Vector4()) },
+        uTurn: { value: Array.from({ length: count }, () => new Vector4(0, 0, 0, 1)) },
+        uFlame: { value: 0 },
+      },
+      ...LIGHT,
+    });
+  }
+}
+
+// ── Os nomes das obras ───────────────────────────────────────────────────────
+
+/**
+ * Um quad por nome, sempre de frente para a câmera (billboard), lendo o atlas
+ * (labels.ts). Sem reflexos: o nome é para ler. Aparece com a obra pronta e
+ * se apaga quando a câmera passa por ela (a CPU decide o alpha).
+ */
+export class LabelMaterial extends ShaderMaterial {
+  constructor(atlas: Texture, count: number) {
+    super({
+      vertexShader: glsl`
+        ${tunnelChunk}
+        uniform vec4 uAnchor[${int(count)}]; // xyz · w = alpha
+        uniform vec4 uRect[${int(count)}];
+        uniform vec2 uSize;
+        varying vec2 vUv;
+        varying float vAlpha;
+        void main() {
+          vec4 anchor = uAnchor[gl_InstanceID];
+          if (anchor.w <= 0.001) { ${DORMANT} }
+          vec4 view = modelViewMatrix * vec4(glitchShift(anchor.xyz), 1.0);
+          view.xy += position.xy * uSize;
+          gl_Position = projectionMatrix * view;
+          vec4 rect = uRect[gl_InstanceID];
+          vUv = mix(rect.xy, rect.zw, position.xy + 0.5);
+          vAlpha = anchor.w * tunnelFog(length(view.xyz));
+        }`,
+      fragmentShader: glsl`
+        uniform sampler2D uAtlas;
+        varying vec2 vUv;
+        varying float vAlpha;
+        void main() {
+          float ink = texture2D(uAtlas, vUv).a;
+          gl_FragColor = vec4(mix(${EMERALD}, vec3(1.0), 0.72) * ink * vAlpha * 1.05, 1.0);
+          ${OUTPUT}
+        }`,
+      uniforms: {
+        ...tunnelUniforms(),
+        uAtlas: { value: atlas },
+        uAnchor: { value: Array.from({ length: count }, () => new Vector4()) },
+        uRect: { value: Array.from({ length: count }, () => new Vector4(0, 0, 1, 1)) },
+        uSize: { value: new Vector2(2.2, 2.2 * 0.25) },
+      },
+      ...LIGHT,
+    });
+  }
+}
+
+// ── O coração ────────────────────────────────────────────────────────────────
+
+/**
+ * O coração (heart.ts), todo no vertex shader a partir de 4 números por
+ * frame: a batida (uBeat), a onda que ela solta (uWave), a montagem
+ * (uReveal) e o tempo.
+ *   semente  os raios se estendem a cada batida;
+ *   rede     acende quando a onda passa pela casca de cada ponto;
+ *   fibras   contraem e TORCEM — base e ápice giram em sentidos opostos, e as
+ *            duas camadas de hélice também (o coração espreme como um pano);
+ *   órbitas  giram devagar, cada uma no seu passo;
+ *   vasos    pacotes de luz correm das paredes até ele.
+ * Montagem de dentro para fora: a semente acende primeiro, as fibras sobem do
+ * ápice, os vasos chegam por último — vindos de onde você está.
+ */
+export class HeartMaterial extends ShaderMaterial {
+  constructor() {
+    super({
+      vertexShader: glsl`
+        ${tunnelChunk}
+        attribute vec4 aHeart; // x camada · y parâmetro · z semente · w vez na montagem
+        uniform float uWave;
+        uniform float uReveal;
+        varying vec3 vColor;
+
+        mat2 turn2(float a) { float c = cos(a); float s = sin(a); return mat2(c, s, -s, c); }
+        const mat3 TILT = mat3(${HEART_TILT.map(float).join(', ')});
+
+        void main() {
+          float shown = smoothstep(aHeart.w, aHeart.w + 0.12, uReveal);
+          if (shown <= 0.001) { ${DORMANT} }
+          float layer = aHeart.x;
+          float u = aHeart.y;
+          vec3 p = position;
+          vec3 color;
+          if (layer < 0.5) {
+            p *= 1.0 + uBeat * 0.7 * u;
+            color = vec3(1.0, 0.88, 0.66) * (1.1 + uBeat * 3.2);
+          } else if (layer < 1.5) {
+            p *= 1.0 - uBeat * 0.05;
+            float wave = exp(-pow((u - uWave) / 0.11, 2.0));
+            color = vec3(1.0, 0.6, 0.3) * (0.16 + wave * 1.9 + uBeat * 0.15);
+          } else if (layer < 3.5) {
+            bool outer = layer < 2.5;
+            float squeeze = uBeat * 0.085 * (0.6 + 0.4 * sin(3.14159 * u));
+            p.xz *= 1.0 - squeeze;
+            p.y *= 1.0 - uBeat * 0.035;
+            p.xz = turn2(uBeat * 0.3 * (u - 0.5) * (outer ? 1.0 : -1.0) + uTime * 0.05) * p.xz;
+            color = vec3(0.98, 0.43, 0.27) * (outer ? 1.0 : 0.62) * (0.42 + uBeat * 0.95);
+          } else if (layer > 5.5) {
+            // Grandes vasos: acompanham a contração, sem torcer.
+            p *= 1.0 - uBeat * 0.04;
+            color = vec3(0.95, 0.36, 0.28) * (0.5 + uBeat * 0.7);
+          } else if (layer < 4.5) {
+            p.xz = turn2(uTime * (0.08 + aHeart.z * 0.12) * (aHeart.z > 0.5 ? -1.0 : 1.0)) * p.xz;
+            color = vec3(1.0, 0.84, 0.6) * (0.3 + uBeat * 0.25);
+          } else {
+            float packet = pow(fract(u * 2.5 + uTime * 0.55 + aHeart.z), 18.0);
+            color = vec3(0.95, 0.45, 0.3) * (0.16 + packet * 2.2 + uBeat * 0.2 * (1.0 - u));
+          }
+          // O corpo bate no próprio eixo e então se inclina (órbitas e vasos das paredes não).
+          if (layer < 3.5 || layer > 5.5) p = TILT * p;
+          vec3 world = glitchShift(mirrorOf(uCore + p, gl_InstanceID));
+          vec4 view = modelViewMatrix * vec4(world, 1.0);
+          gl_Position = projectionMatrix * view;
+          // Reflexos só de 1ª ordem e fracos: ele ocupa quase a altura do túnel, e cópias fortes viravam uma coluna.
+          float mirror = gl_InstanceID == 0 ? 1.0 : 0.3;
+          vColor = color * shown * uMirror[gl_InstanceID].z * mirror * tunnelFog(length(view.xyz));
+        }`,
+      fragmentShader: glsl`
+        uniform float uGlitch;
+        varying vec3 vColor;
+        void main() {
+          vec3 color = mix(vColor, vec3(vColor.g * 1.4, vColor.r * 0.2, vColor.b * 0.3), uGlitch * 0.6);
+          gl_FragColor = vec4(color, 1.0);
+          ${OUTPUT}
+        }`,
+      uniforms: { ...tunnelUniforms(), uWave: { value: 1.3 }, uReveal: { value: 0 } },
       ...LIGHT,
     });
   }
