@@ -14,13 +14,17 @@ import { BUILD, TUNNEL } from './config';
  * origem até o fim conforme o progresso. Nada é escrito por frame: rolar
  * para trás desfaz a construção exatamente, porque tudo é função do scroll.
  *
- * Simetria: cada peça nasce em par espelhado (x ↔ −x) com janelas de tempo
- * diferentes — a construção é assimétrica e viva, o resultado final é simétrico.
+ * Dois distritos, um de cada lado do corredor: à esquerda a ESTRUTURA
+ * (caixas, escalonadas, coroas piramidais, treliças, gêmeas com passarela), à
+ * direita a FORMA (torcidas, cilindros, afuniladas, cúpulas, estalactites).
+ * A moldura do túnel — pórticos, pontes, cabos, trilhas — e o núcleo do fim
+ * continuam simétricos: são o chão comum das duas metades da arquitetura.
  */
 
 export const KIND = { tower: 0, ring: 1, arc: 2, trace: 3, core: 4, frame: 5 } as const;
 
 type V3 = [number, number, number];
+type XZ = [number, number];
 
 const F = TUNNEL.floor;
 const C = TUNNEL.ceiling;
@@ -80,42 +84,258 @@ function* cityGenerator(): Generator<void, CityData> {
   /** Sub-janela `s` (0..1) dentro da janela da peça. */
   const sub = ([start, dur]: [number, number], s: number, length = 0.4): [number, number] => [start + s * dur, Math.max(0.006, dur * length)];
 
-  // ── Torres ──
-  const tower = (x: number, z: number, w: number, d: number, h: number, base: number, dir: number, ringStep: number) => {
-    const win = windowAt(z);
-    const xs = [x - w / 2, x + w / 2];
-    const zs = [z - d / 2, z + d / 2];
-    const corners: [number, number][] = [[xs[0], zs[0]], [xs[1], zs[0]], [xs[1], zs[1]], [xs[0], zs[1]]];
-    const top = base + dir * h;
-    corners.forEach(([cx, cz], i) => {
-      const [s, l] = sub(win, i * 0.03, 0.55);
-      build.seg([cx, base, cz], [cx, top, cz], s, l, KIND.tower);
+  // ── Construções ──
+  // Primitivas: anéis poligonais e prismas (retos ou torcidos) que crescem a partir da base.
+  type Win = [number, number];
+  /** Sub-janela dentro da fatia `span` da janela da peça (peças compostas dividem a janela entre as partes). */
+  const part = (win: Win, span: Win, s: number, length: number) => sub(win, span[0] + s * (span[1] - span[0]), length * (span[1] - span[0]));
+
+  const rect = (x: number, z: number, w: number, d: number, angle = 0): XZ[] =>
+    ([[-1, -1], [1, -1], [1, 1], [-1, 1]] as const).map(([u, v]) => {
+      const px = (u * w) / 2;
+      const pz = (v * d) / 2;
+      return [x + px * Math.cos(angle) - pz * Math.sin(angle), z + px * Math.sin(angle) + pz * Math.cos(angle)];
     });
-    const ring = (y: number, s: number, kind: number) =>
-      corners.forEach(([cx, cz], i) => {
-        const [nx, nz] = corners[(i + 1) % 4];
-        const [start, dur] = sub(win, s + i * 0.025, 0.12);
-        build.seg([cx, y, cz], [nx, y, nz], start, dur, kind);
+  const polygon = (x: number, z: number, r: number, n: number, angle = 0): XZ[] =>
+    Array.from({ length: n }, (_, i) => {
+      const a = angle + (i / n) * Math.PI * 2;
+      return [x + Math.cos(a) * r, z + Math.sin(a) * r];
+    });
+
+  const ring = (poly: XZ[], y: number, win: Win, span: Win, s: number, kind: number) =>
+    poly.forEach(([cx, cz], i) => {
+      const [nx, nz] = poly[(i + 1) % poly.length];
+      const [start, dur] = part(win, span, s + (i * 0.1) / poly.length, 0.12);
+      build.seg([cx, y, cz], [nx, y, nz], start, dur, kind);
+    });
+
+  /**
+   * Prisma de `floors` andares entre y0 e y1. `at(f)` dá o contorno na fração de
+   * altura f (0 base → 1 topo): constante = prisma reto (arestas verticais
+   * inteiras); variando = torcido ou afunilado (arestas andar a andar).
+   */
+  const prism = (at: (f: number) => XZ[], y0: number, y1: number, floors: number, win: Win, span: Win = [0, 1], varying = false) => {
+    const yAt = (k: number) => y0 + ((y1 - y0) * k) / floors;
+    if (!varying) {
+      const top = at(1);
+      at(0).forEach(([cx, cz], i) => {
+        const [s, l] = part(win, span, i * 0.03, 0.55);
+        build.seg([cx, y0, cz], [top[i][0], y1, top[i][1]], s, l, KIND.tower);
       });
-    ring(base, 0, KIND.tower);
-    const rings = Math.max(1, Math.round(h / ringStep));
-    for (let k = 1; k <= rings; k++) ring(base + (dir * h * k) / rings, 0.12 + (0.72 * k) / rings, k === rings ? KIND.tower : KIND.ring);
-    // Montantes na fachada voltada para o corredor: a janela de dados.
-    if (w > 0.8 && h > 1.2) {
-      const facade = Math.abs(xs[0]) < Math.abs(xs[1]) ? xs[0] : xs[1];
-      for (const t of [0.33, 0.66]) {
-        const [s, l] = sub(win, 0.2 + t * 0.2, 0.6);
-        build.seg([facade, base, zs[0] + d * t], [facade, top, zs[0] + d * t], s, l, KIND.ring);
+    } else {
+      for (let k = 0; k < floors; k++) {
+        const a = at(k / floors);
+        const b = at((k + 1) / floors);
+        a.forEach(([cx, cz], i) => {
+          const [s, l] = part(win, span, 0.05 + (0.7 * k) / floors + i * 0.01, 0.6 / floors + 0.08);
+          build.seg([cx, yAt(k), cz], [b[i][0], yAt(k + 1), b[i][1]], s, l, KIND.tower);
+        });
       }
     }
-    // Agulha de luz no topo de algumas torres do chão.
-    if (dir > 0 && rng() < 0.28) {
-      const tip = Math.min(C - 0.2, top + range(0.3, 0.9));
-      if (tip > top + 0.1) {
-        const [s, l] = sub(win, 0.9, 0.3);
-        build.seg([x, top, z], [x, tip, z], s, l, KIND.arc, 0, 1);
-      }
+    for (let k = 0; k <= floors; k++) {
+      ring(at(k / floors), yAt(k), win, span, k === 0 ? 0 : 0.12 + (0.72 * k) / floors, k === 0 || k === floors ? KIND.tower : KIND.ring);
     }
+  };
+
+  /** Agulha de luz no topo (só no chão, sem tocar o teto). */
+  const needle = (x: number, z: number, top: number, win: Win, chance: number) => {
+    if (rng() >= chance) return;
+    const tip = Math.min(C - 0.2, top + range(0.3, 0.9));
+    if (tip <= top + 0.1) return;
+    const [s, l] = sub(win, 0.9, 0.3);
+    build.seg([x, top, z], [x, tip, z], s, l, KIND.arc, 0, 1);
+  };
+
+  /**
+   * Cada construção recebe (x, z, base, dir, h) — `dir` +1 cresce do chão, −1
+   * pende do teto — e devolve nada: emite os próprios segmentos. `reach` é a
+   * meia-largura em x (para nunca invadir o corredor).
+   */
+  interface Spec {
+    x: number;
+    z: number;
+    base: number;
+    dir: number;
+    h: number;
+  }
+  type Piece = { reach: number; emit: (spec: Spec) => void };
+  type District = Record<'ground' | 'hanging' | 'far', [number, () => Piece][]>;
+
+  // ESTRUTURAL — ortogonal: caixa, escalonada, coroa piramidal, treliça, gêmeas.
+  const box = (w: number, d: number): Piece => ({
+    reach: w / 2,
+    emit: ({ x, z, base, dir, h }) => {
+      const win = windowAt(z);
+      const top = base + dir * h;
+      prism(() => rect(x, z, w, d), base, top, Math.max(1, Math.round(h / (dir < 0 ? 0.3 : 0.38))), win);
+      // Montantes na fachada voltada para o corredor: a janela de dados.
+      if (w > 0.8 && h > 1.2) {
+        const facade = x > 0 ? x - w / 2 : x + w / 2;
+        for (const t of [0.33, 0.66]) {
+          const [s, l] = sub(win, 0.2 + t * 0.2, 0.6);
+          build.seg([facade, base, z - d / 2 + d * t], [facade, top, z - d / 2 + d * t], s, l, KIND.ring);
+        }
+      }
+      if (dir > 0) needle(x, z, top, win, 0.28);
+    },
+  });
+  const setback = (w: number, d: number): Piece => ({
+    reach: w / 2,
+    emit: ({ x, z, base, dir, h }) => {
+      const win = windowAt(z);
+      const tiers = h > 1.8 ? 3 : 2;
+      const heights = tiers === 3 ? [0.5, 0.3, 0.2] : [0.62, 0.38];
+      let y = base;
+      heights.forEach((share, i) => {
+        const scale = 1 - i * 0.28;
+        const next = y + dir * h * share;
+        prism(() => rect(x, z, w * scale, d * scale), y, next, Math.max(1, Math.round((h * share) / 0.34)), win, [i / tiers, (i + 1) / tiers]);
+        y = next;
+      });
+      if (dir > 0) needle(x, z, y, win, 0.5);
+    },
+  });
+  const crowned = (w: number, d: number): Piece => ({
+    reach: w / 2,
+    emit: ({ x, z, base, dir, h }) => {
+      const win = windowAt(z);
+      const shoulder = base + dir * h * 0.74;
+      prism(() => rect(x, z, w, d), base, shoulder, Math.max(1, Math.round((h * 0.74) / 0.38)), win, [0, 0.75]);
+      const apex: V3 = [x, base + dir * h, z];
+      rect(x, z, w, d).forEach(([cx, cz], i) => {
+        const [s, l] = part(win, [0.75, 1], i * 0.05, 0.7);
+        build.seg([cx, shoulder, cz], apex, s, l, KIND.tower);
+      });
+    },
+  });
+  const truss = (w: number): Piece => ({
+    reach: w / 2,
+    emit: ({ x, z, base, dir, h }) => {
+      const win = windowAt(z);
+      const floors = Math.max(2, Math.round(h / 0.34));
+      const at = () => rect(x, z, w, w);
+      prism(at, base, base + dir * h, floors, win);
+      // Contraventamento em X em todas as faces: a estrutura à mostra.
+      const corners = at();
+      for (let k = 0; k < floors; k++) {
+        const y0 = base + (dir * h * k) / floors;
+        const y1 = base + (dir * h * (k + 1)) / floors;
+        corners.forEach(([ax, az], i) => {
+          const [bx, bz] = corners[(i + 1) % 4];
+          const [s, l] = sub(win, 0.15 + (0.7 * k) / floors, 0.18);
+          build.seg([ax, y0, az], [bx, y1, bz], s, l, KIND.ring);
+          build.seg([bx, y0, bz], [ax, y1, az], s, l, KIND.ring);
+        });
+      }
+      if (dir > 0) needle(x, z, base + h, win, 0.8);
+    },
+  });
+  const twins = (w: number, d: number, gap: number): Piece => ({
+    reach: w / 2,
+    emit: ({ x, z, base, dir, h }) => {
+      const win = windowAt(z);
+      const offset = (w + gap) / 2;
+      const floors = Math.max(1, Math.round(h / 0.38));
+      for (const side of [-1, 1]) prism(() => rect(x, z + side * offset, w, d), base, base + dir * h, floors, win, [side < 0 ? 0 : 0.08, side < 0 ? 0.85 : 0.93]);
+      // A passarela entre as duas, a 2/3 da altura.
+      const y = base + dir * h * 0.66;
+      const yTop = y + dir * 0.16;
+      for (const [px, py] of [[x - w * 0.3, y], [x + w * 0.3, y], [x - w * 0.3, yTop], [x + w * 0.3, yTop]] as const) {
+        const [s, l] = sub(win, 0.82, 0.18);
+        build.seg([px, py, z - offset + d / 2], [px, py, z + offset - d / 2], s, l, KIND.arc, 0, 1);
+      }
+    },
+  });
+
+  // PARAMÉTRICO — curvo e rotacional: torcida, cilindro, afunilada, cúpula.
+  const twisted = (w: number, turn: number, taper: number): Piece => ({
+    reach: w * 0.71,
+    emit: ({ x, z, base, dir, h }) => {
+      const win = windowAt(z);
+      const spin = range(0, Math.PI / 2);
+      const floors = Math.max(3, Math.round(h / 0.4));
+      prism((f) => rect(x, z, w * (1 - taper * f), w * (1 - taper * f), spin + turn * f), base, base + dir * h, floors, win, [0, 1], true);
+      if (dir > 0) needle(x, z, base + h, win, 0.35);
+    },
+  });
+  const cylinder = (r: number, taper: number, sides: number): Piece => ({
+    reach: r,
+    emit: ({ x, z, base, dir, h }) => {
+      const win = windowAt(z);
+      const floors = Math.max(2, Math.round(h / (taper > 0 ? 0.55 : 0.42)));
+      const spin = range(0, Math.PI);
+      prism((f) => polygon(x, z, r * (1 - taper * f), sides, spin), base, base + dir * h, floors, win, [0, 1], taper > 0);
+      if (dir > 0) needle(x, z, base + h, win, 0.3);
+    },
+  });
+  const dome = (r: number): Piece => ({
+    reach: r,
+    emit: ({ x, z, base, dir }) => {
+      const win = windowAt(z);
+      const MERIDIANS = 7;
+      const STEPS = 4;
+      const at = (a: number, phi: number): V3 => [x + Math.cos(a) * r * Math.cos(phi), base + dir * r * Math.sin(phi), z + Math.sin(a) * r * Math.cos(phi)];
+      for (let m = 0; m < MERIDIANS; m++) {
+        const a = (m / MERIDIANS) * Math.PI * 2;
+        for (let j = 0; j < STEPS; j++) {
+          const p0 = (j / STEPS) * (Math.PI / 2);
+          const p1 = ((j + 1) / STEPS) * (Math.PI / 2);
+          const [s, l] = sub(win, 0.08 + m * 0.012 + (j / STEPS) * 0.6, 0.16);
+          build.seg(at(a, p0), at(a, p1), s, l, KIND.tower);
+        }
+      }
+      // Paralelos: anéis que fecham a cúpula de baixo para cima.
+      [0, 0.55, 1.1].forEach((phi, i) =>
+        ring(polygon(x, z, r * Math.cos(phi), 12), base + dir * r * Math.sin(phi), win, [0, 1], i === 0 ? 0 : 0.3 + i * 0.18, i === 0 ? KIND.tower : KIND.ring),
+      );
+    },
+  });
+
+  /** Sorteio ponderado de uma construção do repertório. */
+  const pick = (options: [number, () => Piece][]) => {
+    let roll = rng() * options.reduce((sum, [weight]) => sum + weight, 0);
+    for (const [weight, make] of options) if ((roll -= weight) <= 0) return make();
+    return options[options.length - 1][1]();
+  };
+
+  /**
+   * Os dois distritos: a cidade não é mais espelhada. À esquerda, a ESTRUTURA
+   * (ortogonal, engenharia à mostra); à direita, a FORMA (curvas, rotação).
+   * As duas metades da arquitetura, uma de cada lado do corredor.
+   */
+  const LEFT: District = {
+    ground: [
+      [3, () => box(range(0.4, 1.3), range(0.4, 1.1))],
+      [2.4, () => setback(range(0.7, 1.3), range(0.6, 1.1))],
+      [1.6, () => crowned(range(0.5, 1.0), range(0.5, 1.0))],
+      [1.2, () => truss(range(0.3, 0.45))],
+      [0.9, () => twins(range(0.35, 0.55), range(0.35, 0.55), range(0.35, 0.6))],
+    ],
+    hanging: [
+      [3, () => box(range(0.4, 1.3), range(0.4, 1.1))],
+      [2, () => setback(range(0.7, 1.2), range(0.6, 1.0))],
+    ],
+    far: [
+      [3, () => box(range(0.8, 2.0), range(0.8, 2.0))],
+      [2, () => setback(range(1.0, 2.0), range(1.0, 2.0))],
+      [1, () => truss(range(0.5, 0.8))],
+    ],
+  };
+  const RIGHT: District = {
+    ground: [
+      [3, () => twisted(range(0.45, 0.95), range(0.5, 1.5), range(0, 0.3))],
+      [2.6, () => cylinder(range(0.25, 0.6), 0, rng() < 0.5 ? 6 : 8)],
+      [1.8, () => cylinder(range(0.35, 0.65), range(0.45, 0.8), 8)],
+      [1.6, () => dome(range(0.55, 1.1))],
+    ],
+    hanging: [
+      [3, () => cylinder(range(0.3, 0.6), range(0.75, 0.92), rng() < 0.5 ? 5 : 7)],
+      [2, () => twisted(range(0.4, 0.8), range(0.6, 1.4), range(0.2, 0.5))],
+    ],
+    far: [
+      [3, () => twisted(range(0.9, 1.7), range(0.4, 1.0), range(0, 0.25))],
+      [2.5, () => cylinder(range(0.5, 1.0), range(0, 0.3), 10)],
+    ],
   };
 
   const zEnd = CORE_CENTER[2] - 4;
@@ -129,25 +349,26 @@ function* cityGenerator(): Generator<void, CityData> {
 
   let rowCount = 0;
   for (const z of rows) {
-    if (++rowCount % 12 === 0) yield;
-    // Perto do corredor: 1–2 torres por lado, do chão ou do teto.
-    const near = rng() < 0.55 ? 2 : 1;
-    for (let k = 0; k < near; k++) {
-      const w = range(0.4, 1.3);
-      const d = range(0.4, 1.1);
-      const x = BUILD.corridor + 0.25 + w / 2 + k * range(1.2, 2.2) + rng() * 0.6;
-      const zz = z + range(-0.3, 0.3);
-      const hanging = rng() < 0.35;
-      const h = hanging ? range(0.4, 1.7) : range(0.5, 3.2);
-      mirrored((side) => tower(side * x, zz, w, d, h, hanging ? C : F, hanging ? -1 : 1, hanging ? 0.3 : 0.38));
-    }
-    // Ao longe: torres altas e simples.
-    if (rng() < 0.7) {
-      const w = range(0.8, 2.0);
-      const d = range(0.8, 2.0);
-      const x = range(5.6, BUILD.width);
-      const h = range(1.6, C - F - 0.2);
-      mirrored((side) => tower(side * x, z + range(-0.5, 0.5), w, d, h, F, 1, 0.6));
+    if (++rowCount % 6 === 0) yield;
+    for (const side of [-1, 1] as const) {
+      const district = side < 0 ? LEFT : RIGHT;
+      // Perto do corredor: 1–2 construções por lado, do chão ou do teto.
+      const near = rng() < 0.55 ? 2 : 1;
+      let edge = BUILD.corridor + 0.25;
+      for (let k = 0; k < near; k++) {
+        const hanging = rng() < 0.35;
+        const piece = pick(hanging ? district.hanging : district.ground);
+        const x = edge + piece.reach + rng() * 0.6;
+        edge = x + piece.reach + range(0.5, 1.2);
+        const h = hanging ? range(0.4, 1.7) : range(0.5, 3.2);
+        piece.emit({ x: side * x, z: z + range(-0.3, 0.3), base: hanging ? C : F, dir: hanging ? -1 : 1, h });
+      }
+      // Ao longe: construções altas.
+      if (rng() < 0.7) {
+        const piece = pick(district.far);
+        const x = Math.max(range(5.6, BUILD.width), edge + piece.reach);
+        piece.emit({ x: side * x, z: z + range(-0.5, 0.5), base: F, dir: 1, h: range(1.6, C - F - 0.2) });
+      }
     }
   }
 
