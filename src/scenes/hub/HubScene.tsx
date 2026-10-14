@@ -124,11 +124,12 @@ export default function HubScene() {
   );
 
   // O primeiro fruto despertou: a árvore fala de novo, depois que a explosão assenta.
+  // A travessia é do jogador: só o TOQUE no fruto abre a fissura (ver onFruitClick).
+  // A Fase 1 já está pré-carregada e aquecida desde que a hub carregou — esperar o toque não custa nada.
   useEffect(() => {
     let timer = 0;
-    // O primeiro fruto estilhaça as correntes… e se rompe numa fissura na realidade, depois que a explosão respira.
     director.setBreakListener((fruit) => {
-      if (fruit === 0) timer = window.setTimeout(() => director.rupture(), 1100);
+      if (fruit === 0) timer = window.setTimeout(() => useHubDialogue.getState().say('awakened'), 1100);
     });
     return () => {
       director.setBreakListener(null);
@@ -151,6 +152,8 @@ export default function HubScene() {
       const progress = useProgressStore.getState();
       if (!progress.fruit1Unlocked) useHubDialogue.getState().say('call');
       else if (progress.canUnlock(2)) useHubDialogue.getState().say('ready-2');
+      // Desperto, mas a travessia ficou para depois (ex.: voltou do reino sem a Seiva): a árvore relembra.
+      else if (!progress.isUnlocked(2) && !progress.equipment.includes('seiva_pura')) useHubDialogue.getState().say('awakened');
     }
   }, -1);
 
