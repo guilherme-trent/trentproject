@@ -211,6 +211,17 @@ export class LiquidFruitMaterial extends ShaderMaterial {
 
 // ── Halo + onda de choque ────────────────────────────────────────────────────
 
+/**
+ * A onda de choque: anel que corre a `speed` u/s e se apaga entre `fade`
+ * (segundos desde a explosão). O quad cresce para `size` só durante a vida do
+ * anel — o bastante para o anel INTEIRO caber nele até sumir (a frente final
+ * mais a largura). Com o quad menor que o anel, ele era cortado por uma borda
+ * reta invisível.
+ */
+const SHOCK = { speed: 3.4, fade: [1.15, 1.8] as const } as const;
+const SHOCK_REACH = SHOCK.speed * SHOCK.fade[1] + 2 * (0.05 + SHOCK.fade[1] * 0.08);
+const HALO_SIZE = { rest: 3.2, shock: 2 * SHOCK_REACH * 1.08 } as const;
+
 const haloVertex = glsl`
 uniform float uSize;
 uniform float uIntensity;
@@ -239,11 +250,14 @@ void main() {
   vec3 color = uColor * glow;
   if (uBreak >= 0.0) {
     float k = uBreak;
-    float front = k * 3.4;
-    float shock = exp(-pow((r - front) / (0.05 + k * 0.08), 2.0)) * exp(-k * 2.2) * 3.0;
+    float front = k * ${float(SHOCK.speed)};
+    float shock = exp(-pow((r - front) / (0.05 + k * 0.08), 2.0)) * exp(-k * 2.2) * 3.0
+                * (1.0 - smoothstep(${float(SHOCK.fade[0])}, ${float(SHOCK.fade[1])}, k));
     float flash = exp(-r * r * 1.2) * exp(-k * 6.0) * 6.0;
     color += mix(${vec3(SEAL)}, vec3(1.0), 0.55) * shock + vec3(1.0, 0.9, 0.8) * flash;
   }
+  // Rede de segurança: nada chega à borda do quad com brilho (nunca um corte reto).
+  color *= 1.0 - smoothstep(0.9, 1.0, length(vUv - 0.5) * 2.0);
   gl_FragColor = vec4(color * uIntensity, 1.0);
 }
 `;
@@ -255,7 +269,7 @@ export class HaloMaterial extends ShaderMaterial {
       fragmentShader: haloFragment,
       uniforms: {
         uTime: shared.uTime,
-        uSize: { value: 3.2 },
+        uSize: { value: HALO_SIZE.rest },
         uIntensity: { value: 0 },
         uColor: { value: new Color(...color) },
         uUnlock: { value: 0 },
@@ -275,7 +289,7 @@ export class HaloMaterial extends ShaderMaterial {
     u.uBreak.value = breakClock;
     u.uHover.value = hover;
     // O quad cresce só enquanto a onda de choque precisa de espaço.
-    u.uSize.value = breakClock >= 0 && breakClock < 1.6 ? 9 : 3.2;
+    u.uSize.value = breakClock >= 0 && breakClock < SHOCK.fade[1] ? HALO_SIZE.shock : HALO_SIZE.rest;
   }
 }
 
