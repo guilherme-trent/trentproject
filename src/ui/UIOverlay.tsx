@@ -10,6 +10,7 @@ import { RealmHud } from './RealmHud';
 import { MetropolisHud } from './architecture/MetropolisHud';
 import { TreeDialogue } from './hub/TreeDialogue';
 import { ResetRitualButton } from './hub/ResetRitualButton';
+import { SaidaPortfolio } from './SaidaPortfolio';
 
 type OverlayView = 'loading' | 'start' | 'realm' | null;
 
@@ -50,6 +51,7 @@ export function UIOverlay() {
       {/* A voz da árvore: só na hub carregada (fora do mode="wait", que admite uma view por vez). */}
       {isLoaded && currentScene === 'hub' && <TreeDialogue />}
       {isLoaded && currentScene === 'hub' && <ResetRitualButton />}
+      <SaidaPortfolio />
     </div>
   );
 }

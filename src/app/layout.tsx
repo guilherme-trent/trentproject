@@ -20,9 +20,22 @@ const cormorant = Cormorant_Garamond({
   style: ["normal", "italic"],
 });
 
+const DESCRICAO =
+  'Software Engineer e Technical Product Manager em Brasília. Projetos, experiência e uma jornada interativa em 3D.';
+
 export const metadata: Metadata = {
-  title: "The Orchestrator's Canvas",
-  description: "Manifesto interativo de um Technical Product Manager.",
+  metadataBase: new URL('https://guilhermetrent.com.br'),
+  title: { default: 'Guilherme Trent · Software Engineer', template: '%s · Guilherme Trent' },
+  description: DESCRICAO,
+  authors: [{ name: 'Guilherme Trent' }],
+  openGraph: {
+    type: 'website',
+    locale: 'pt_BR',
+    siteName: 'Guilherme Trent',
+    title: 'Guilherme Trent · Software Engineer',
+    description: DESCRICAO,
+  },
+  twitter: { card: 'summary_large_image', title: 'Guilherme Trent · Software Engineer', description: DESCRICAO },
 };
 
 export const viewport: Viewport = {
@@ -38,8 +51,12 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html
       lang="pt-BR"
       className={`${geistSans.variable} ${geistMono.variable} ${cormorant.variable} h-full bg-black antialiased`}
+      // O portfólio põe classes aqui antes de o React acordar ("com-js", para as animações de entrada não
+      // piscarem) e depois ao rolar ("rolou"). A diferença com o HTML do servidor é intencional.
+      suppressHydrationWarning
     >
-      <body className="h-full overflow-hidden bg-black text-white">{children}</body>
+      {/* A rolagem é liberada aqui; a experiência 3D trava a dela no próprio layout (app/experiencia/layout.tsx). */}
+      <body className="min-h-full bg-black text-white">{children}</body>
     </html>
   );
 }

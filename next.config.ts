@@ -8,6 +8,8 @@ const nextConfig: NextConfig = {
    * Faixas privadas comuns de Wi-Fi doméstico.
    */
   allowedDevOrigins: ["192.168.*.*", "10.*.*.*"],
+  /** Qualidades aceitas pelo next/image: 75 (padrão) e 90 (as telas dos projetos no portfólio, com texto miúdo). */
+  images: { qualities: [75, 90] },
 };
 
 export default nextConfig;
