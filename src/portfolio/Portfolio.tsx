@@ -1,16 +1,17 @@
+import Image from 'next/image';
 import Link from 'next/link';
 import type { CSSProperties } from 'react';
 import { Animacoes } from './Animacoes';
 import {
-  COMPETENCIAS, CURIOSIDADE, DESTAQUE, EXPERIENCIA, FERRAMENTAS, FORMACAO, NUMEROS, PESSOA, PROJETOS,
+  COMPETENCIAS, CURIOSIDADE, DESTAQUE, EXPERIENCIA, FERRAMENTAS, FORMACAO, LABORATORIO, NUMEROS, PESSOA, PROJETOS,
   type Link as LinkDoProjeto, type Projeto,
 } from './conteudo';
 import { Diagnostico } from './Diagnostico';
 import { Faiscas } from './Faiscas';
 import { Faixa } from './Faixa';
-import { Olho, Telemetria } from './Hud';
+import { Telemetria } from './Hud';
+import { MarDePontos } from './MarDePontos';
 import { PreviaCurriculo } from './PreviaCurriculo';
-import { Seiva } from './Seiva';
 import { VideoArvore } from './VideoArvore';
 import { Vitrine } from './Vitrine';
 import './portfolio.css';
@@ -36,6 +37,7 @@ export function Portfolio() {
         <Projetos />
         <Experiencia />
         <Formacao />
+        <Laboratorio />
         <Faixa itens={COMPETENCIAS} reverso />
         <Contato />
       </main>
@@ -71,12 +73,8 @@ function Cabecalho() {
 function Topo() {
   return (
     <section id="topo" className="topo relative flex min-h-dvh items-end overflow-hidden pb-[6vh] pt-[48svh] md:items-center md:pb-0 md:pt-28">
-      {/* O chão de grade em perspectiva, correndo na direção de quem olha */}
-      <div className="chao" aria-hidden="true"><div className="chao-plano" /></div>
-      <div className="topo-arvore" aria-hidden="true">
-        <VideoArvore capa="/portfolio/arvore-capa.webp" capaRetrato="/portfolio/arvore-retrato-capa.webp" />
-        <Seiva />
-        <Olho />
+      <div className="topo-mar" aria-hidden="true">
+        <MarDePontos />
       </div>
       <Telemetria />
       <div className={`${largura} topo-texto relative`}>
@@ -265,6 +263,29 @@ function Formacao() {
           ))}
         </ul>
       </div>
+    </section>
+  );
+}
+
+function Laboratorio() {
+  const c = LABORATORIO.cidade;
+  return (
+    <section id="laboratorio" aria-labelledby="titulo-laboratorio" className={`${largura} relative scroll-mt-20 pb-24 pt-24 md:pb-32 md:pt-32`}>
+      <RotuloSecao id="titulo-laboratorio">Laboratório</RotuloSecao>
+      <article className="cartao cantos mt-8 grid overflow-hidden md:grid-cols-[1fr_1.25fr]" data-revelar="subir">
+        <div className="flex flex-col p-6 sm:p-9">
+          <p className="font-mono text-[0.7rem] uppercase tracking-[0.22em] text-[var(--verde-claro)]">{c.selo}</p>
+          <h3 className="mt-3 font-serif text-[clamp(2rem,3.4vw,2.8rem)] font-light leading-tight">{c.nome}</h3>
+          <p className="mt-4 leading-relaxed text-[var(--texto-suave)]">{c.proposta}</p>
+          <p className="mt-6 font-mono text-[0.72rem] leading-relaxed tracking-[0.06em] text-[var(--texto-fraco)]">{c.stack}</p>
+          <div className="mt-6 flex flex-wrap gap-3">
+            <Link href={c.href} className="botao botao-principal">Visitar a cidade <span aria-hidden="true" className="seta">→</span></Link>
+          </div>
+        </div>
+        <Link href={c.href} tabIndex={-1} aria-hidden="true" className="cartao-imagem relative order-first aspect-[16/10] border-b border-[var(--borda)] md:order-last md:aspect-auto md:border-b-0 md:border-l" data-revelar="cortina">
+          <Image src="/portfolio/cidade.webp" alt="" fill sizes="(min-width: 768px) 55vw, 100vw" className="object-cover" />
+        </Link>
+      </article>
     </section>
   );
 }

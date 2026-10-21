@@ -177,3 +177,34 @@ export const FERRAMENTAS = [
   'PostgreSQL', 'Supabase', 'Firebase',
   'Three.js e shaders', 'Vercel', 'GitHub Actions', 'APIs de IA',
 ];
+
+/** O laboratório: experimentos que moram no site, fora da lista de projetos. */
+export const LABORATORIO = {
+  cidade: {
+    nome: 'Cidade Neon',
+    selo: 'experimento · parallax em canvas 2D',
+    proposta:
+      'Uma cidade viva, desenhada só com canvas 2D: role a página e a câmera desce das nuvens até perto da rua, com sete camadas de prédios em profundidade.',
+    stack: 'Canvas 2D · TypeScript · React · sem bibliotecas',
+    href: '/cidade',
+    /** O "como foi feita", no fim da descida. */
+    bastidores: [
+      {
+        titulo: 'Sete camadas, uma câmera.',
+        texto: 'Cada camada sobe numa velocidade proporcional à sua proximidade, a mesma conta de uma câmera de verdade. Ao rolar, a câmera desce 300 m; os anéis da torre passam a ser vistos por baixo.',
+      },
+      {
+        titulo: 'Desenhada uma vez, carimbada sempre.',
+        texto: 'Prédios, janelas e letreiros são desenhados uma única vez, fora da tela. A cada quadro, só se desenha o que vive: 33 veículos, o trem, a chuva, os letreiros que falham.',
+      },
+      {
+        titulo: 'Descarte de oclusão.',
+        texto: 'Como nos motores de jogo: antes de pintar, a cidade calcula da frente para trás o que cada camada esconde, e as de trás só são pintadas onde aparecem. Numa placa de vídeo integrada, a taxa subiu de 40 para cerca de 55 quadros por segundo.',
+      },
+      {
+        titulo: 'Rede de segurança.',
+        texto: 'Se o aparelho não segura 48 quadros por segundo, a cidade tira primeiro o que menos se nota e, se ainda precisar, desenha com menos pixels. Fora da tela, ela para.',
+      },
+    ],
+  },
+};

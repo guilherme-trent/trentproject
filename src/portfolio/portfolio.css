@@ -249,40 +249,31 @@ html:has(.previa-curriculo[open]) {
   opacity: 1;
 }
 
-/* ── O topo ──────────────────────────────────────────────────────────────── */
-.topo-arvore {
+/* ── O topo: o mar de pontos (MarDePontos.tsx) ─────────────────────────── */
+.topo-mar {
   position: absolute;
   inset: 0;
-  overflow: hidden;
   pointer-events: none;
 }
+.mar-de-pontos {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
 @media (min-width: 768px) {
-  /* No computador a árvore fica à direita, viva, ao lado do nome; a borda esquerda some no fundo */
-  .topo-arvore {
-    left: 34%;
-    -webkit-mask-image: linear-gradient(90deg, transparent, #000 26%), linear-gradient(0deg, transparent, #000 22%);
-    -webkit-mask-composite: source-in;
-    mask-image: linear-gradient(90deg, transparent, #000 26%), linear-gradient(0deg, transparent, #000 22%);
-    mask-composite: intersect;
-  }
-  /* o tronco fica à direita do nome, para o "t" final não se perder no brilho */
-  .topo-arvore .video-arvore img,
-  .topo-arvore .video-arvore video {
-    object-position: 36% 32%;
+  /* no computador o mar ocupa a direita e se apaga em direção ao nome */
+  .topo-mar {
+    -webkit-mask-image: linear-gradient(90deg, transparent 6%, #000 50%);
+    mask-image: linear-gradient(90deg, transparent 6%, #000 50%);
   }
 }
 @media (max-width: 767px) {
-  /* No celular a árvore fica em cima e o texto embaixo, sem disputar espaço */
-  .topo-arvore {
-    top: 3.5rem;
-    bottom: auto;
-    height: 46svh;
-    -webkit-mask-image: linear-gradient(180deg, #000 55%, transparent 98%);
-    mask-image: linear-gradient(180deg, #000 55%, transparent 98%);
-  }
-  .topo-arvore .video-arvore img,
-  .topo-arvore .video-arvore video {
-    object-position: 50% 22%;
+  /* no celular o mar fica em cima e o texto embaixo */
+  .topo-mar {
+    -webkit-mask-image: linear-gradient(180deg, #000 40%, transparent 64%);
+    mask-image: linear-gradient(180deg, #000 40%, transparent 64%);
   }
 }
 .letra {
@@ -455,8 +446,12 @@ html:has(.previa-curriculo[open]) {
     animation-delay: var(--atraso, 0ms);
     transform-origin: 50% 100%;
   }
-  .topo-arvore .video-arvore {
-    animation: acender 2.6s cubic-bezier(0.16, 1, 0.3, 1) both 0.2s;
+  .mar-de-pontos {
+    animation: mar-surgir 2.4s cubic-bezier(0.16, 1, 0.3, 1) both 0.2s;
+  }
+  @keyframes mar-surgir {
+    from { opacity: 0; transform: translateY(6vh); }
+    to { opacity: 1; transform: none; }
   }
   .topo::after {
     /* um feixe de luz cruza a tela uma vez, como a ignição da experiência */
@@ -478,10 +473,6 @@ html:has(.previa-curriculo[open]) {
   @keyframes letra {
     from { opacity: 0; transform: translateY(0.45em) rotate(4deg); filter: blur(14px); }
     60% { filter: blur(0); }
-  }
-  @keyframes acender {
-    from { opacity: 0; transform: scale(1.12); filter: brightness(2.2) blur(10px); }
-    to { opacity: 1; transform: none; filter: none; }
   }
   @keyframes feixe {
     to { transform: translateX(100%); }
@@ -558,8 +549,8 @@ html:has(.previa-curriculo[open]) {
 
   /* 3. Parallax na rolagem (onde o navegador suporta animação guiada pela rolagem) */
   @supports (animation-timeline: scroll()) {
-    .topo-arvore {
-      animation: paralaxe-arvore linear both;
+    .topo-mar {
+      animation: paralaxe-mar linear both;
       animation-timeline: scroll(root);
       animation-range: 0 100vh;
     }
@@ -573,7 +564,7 @@ html:has(.previa-curriculo[open]) {
       animation-timeline: scroll(root);
       animation-range: 0 20vh;
     }
-    @keyframes paralaxe-arvore {
+    @keyframes paralaxe-mar {
       to { transform: translateY(26vh) scale(1.08); opacity: 0.3; }
     }
     @keyframes paralaxe-texto {
@@ -641,203 +632,6 @@ html:has(.previa-curriculo[open]) {
   }
   .telemetria-baixo {
     display: none;
-  }
-}
-
-/* ── A mira que olha a árvore como um olho (posição e foco vêm do Hud.tsx) ── */
-.olho {
-  --tam: 13rem;
-  position: absolute;
-  left: 0;
-  top: 0;
-  z-index: 2;
-  width: var(--tam);
-  height: var(--tam);
-  opacity: 0;
-  pointer-events: none;
-  will-change: transform;
-  transition: opacity 1.4s ease;
-}
-.olho.vivo {
-  opacity: 1;
-}
-@media (max-width: 767px) {
-  .olho {
-    --tam: 8.5rem;
-  }
-}
-.mira {
-  width: 100%;
-  height: 100%;
-  overflow: visible;
-  fill: none;
-  stroke: rgba(167, 243, 208, 0.42);
-  stroke-width: 1;
-  mix-blend-mode: screen;
-  transition: transform 0.09s ease-in;
-}
-.olho.piscando .mira {
-  transform: scaleY(0.06);
-}
-.mira .anel {
-  transform-origin: 0 0;
-}
-.mira .iris {
-  transform-origin: 0 0;
-  transition: transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1);
-}
-.olho.focado .mira .iris {
-  transform: scale(0.82);
-}
-.mira .pupila {
-  fill: rgba(110, 231, 183, 0.16);
-  stroke: var(--verde);
-  stroke-width: 1.2;
-  transform-origin: 0 0;
-  transition: transform 0.6s cubic-bezier(0.2, 0.7, 0.2, 1);
-}
-.olho.focado .mira .pupila {
-  transform: scale(0.55);
-}
-.mira .arco {
-  stroke: var(--verde);
-  stroke-width: 1.6;
-  filter: drop-shadow(0 0 4px var(--verde));
-}
-.mira .cruz line {
-  stroke: rgba(167, 243, 208, 0.6);
-}
-/* O rótulo do que o olho está olhando: num painel escuro, para não sumir no brilho da árvore */
-.olho-rotulo {
-  position: absolute;
-  left: calc(100% - 1.2rem);
-  top: 50%;
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
-  min-width: 13rem;
-  padding: 0.6rem 0.8rem;
-  border: 1px solid rgba(110, 231, 183, 0.45);
-  border-left: 2px solid var(--verde);
-  background: rgba(3, 6, 5, 0.86);
-  backdrop-filter: blur(6px);
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.55);
-  font-family: var(--font-geist-mono), monospace;
-  white-space: nowrap;
-  opacity: 0;
-  transform: translate(-6px, -50%);
-  transition: opacity 0.45s ease, transform 0.45s ease;
-}
-.olho-nome {
-  font-size: 0.66rem;
-  font-weight: 600;
-  letter-spacing: 0.2em;
-  color: #fff;
-}
-.olho-sobre {
-  font-family: var(--font-geist-sans), sans-serif;
-  font-size: 0.8rem;
-  letter-spacing: 0;
-  color: rgba(232, 241, 236, 0.86);
-}
-.olho-coord {
-  font-size: 0.56rem;
-  letter-spacing: 0.18em;
-  color: rgba(167, 243, 208, 0.65);
-}
-.olho.focado .olho-rotulo {
-  opacity: 1;
-  transform: translate(0, -50%);
-}
-.olho.lado-esquerdo .olho-rotulo {
-  left: auto;
-  right: calc(100% - 1.2rem);
-  align-items: flex-end;
-  border-left: 1px solid rgba(110, 231, 183, 0.45);
-  border-right: 2px solid var(--verde);
-}
-/* Sobre a árvore, o olho vira o cursor */
-.topo.olho-cursor {
-  cursor: none;
-}
-
-/* ── A Seiva: pulsos de luz subindo pelo tronco até os frutos ── */
-.seiva {
-  position: absolute;
-  pointer-events: none;
-}
-.seiva svg {
-  width: 100%;
-  height: 100%;
-  overflow: visible;
-}
-.seiva-pulso {
-  fill: none;
-  stroke: #f0fdf7;
-  stroke-width: 3px;
-  stroke-linecap: round;
-  vector-effect: non-scaling-stroke;
-  stroke-dasharray: 6 100;
-  stroke-dashoffset: 6;
-  opacity: 0;
-  filter: drop-shadow(0 0 4px #a7f3d0) drop-shadow(0 0 12px #6ee7b7);
-  animation: seiva-correr 6.9s cubic-bezier(0.45, 0.05, 0.4, 1) infinite;
-}
-.seiva-brilho {
-  fill: rgba(240, 253, 247, 0.12);
-  stroke: #f0fdf7;
-  stroke-width: 2px;
-  vector-effect: non-scaling-stroke;
-  transform-box: fill-box;
-  transform-origin: center;
-  opacity: 0;
-  filter: drop-shadow(0 0 10px #6ee7b7);
-  animation: seiva-fruto 6.9s ease-out infinite;
-}
-@keyframes seiva-correr {
-  0% { stroke-dashoffset: 6; opacity: 0; }
-  4% { opacity: 1; }
-  40% { stroke-dashoffset: -100; opacity: 1; }
-  44%, 100% { stroke-dashoffset: -100; opacity: 0; }
-}
-@keyframes seiva-fruto {
-  0%, 37% { opacity: 0; transform: scale(0.3); }
-  41% { opacity: 1; transform: scale(0.7); }
-  60%, 100% { opacity: 0; transform: scale(1.9); }
-}
-@media (prefers-reduced-motion: reduce) {
-  .seiva-pulso,
-  .seiva-brilho {
-    animation-duration: 12s;
-  }
-}
-
-/* ── O chão de grade em perspectiva (o horizonte cyberpunk) ── */
-.chao {
-  position: absolute;
-  inset: auto 0 0 0;
-  height: 42vh;
-  perspective: 340px;
-  perspective-origin: 62% 0%;
-  overflow: hidden;
-  pointer-events: none;
-  -webkit-mask-image: linear-gradient(0deg, #000 10%, transparent 92%);
-  mask-image: linear-gradient(0deg, #000 10%, transparent 92%);
-}
-.chao-plano {
-  position: absolute;
-  inset: -60% -50% 0 -50%;
-  transform: rotateX(72deg);
-  transform-origin: 50% 100%;
-  background-image:
-    linear-gradient(rgba(110, 231, 183, 0.22) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(110, 231, 183, 0.22) 1px, transparent 1px);
-  background-size: 64px 64px;
-}
-@media (max-width: 767px) {
-  .chao {
-    height: 30vh;
-    opacity: 0.6;
   }
 }
 
@@ -1132,23 +926,6 @@ html:has(.previa-curriculo[open]) {
 .diagnostico-cabeca .ponto-vivo {
   animation: piscar-vivo 1.6s ease-in-out infinite;
 }
-.mira .anel-1 { animation: girar-anel 60s linear infinite; }
-.mira .anel-2 { animation: girar-anel 34s linear infinite reverse; }
-.mira .anel-3 { animation: girar-anel 22s linear infinite; }
-.chao-plano {
-  animation: chao-correr 2.4s linear infinite;
-}
-.topo-arvore::after {
-  /* um feixe de varredura desce sobre a árvore, em ciclo */
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(180deg, transparent 46%, rgba(167, 243, 208, 0.16) 50%, transparent 54%);
-  background-size: 100% 260%;
-  animation: varrer 6s ease-in-out infinite 2.5s;
-  pointer-events: none;
-  mix-blend-mode: screen;
-}
 .faixa-trilho {
   animation: correr 46s linear infinite;
 }
@@ -1191,25 +968,15 @@ html:has(.previa-curriculo[open]) {
   animation: reflexo 6s ease-in-out infinite;
 }
 @media (prefers-reduced-motion: reduce) {
-  .chao-plano { animation-duration: 7s; }
   .faixa-trilho { animation-duration: 110s; }
   .faixa-reversa .faixa-trilho { animation-duration: 130s; }
   .batimento { animation-duration: 16s; }
   .contato { animation-duration: 18s; }
-  .mira .anel-1 { animation-duration: 120s; }
-  .mira .anel-2 { animation-duration: 80s; }
-  .mira .anel-3 { animation-duration: 50s; }
 }
 
 @keyframes piscar-vivo {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.25; }
-}
-@keyframes girar-anel {
-  to { transform: rotate(360deg); }
-}
-@keyframes chao-correr {
-  to { background-position: 0 64px, 0 0; }
 }
 @keyframes varrer {
   from { background-position: 0 120%; }

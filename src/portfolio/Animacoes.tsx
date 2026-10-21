@@ -6,10 +6,11 @@ import { useEffect } from 'react';
  * O movimento do portfólio. A página é HTML pronto do servidor; isto só acorda os efeitos:
  * - [data-revelar]: entra em cena quando aparece na tela (a classe `revelado` dispara o CSS);
  * - [data-contar]: o número conta do zero até o valor;
- * - [data-decodificar]: o texto se "decodifica", como no terminal da experiência;
+ * - os textos "criptografados" (o cargo, os botões e os rótulos das seções): se decifram ao entrar em cena,
+ *   ao passar o mouse e, de tempos em tempos, um de cada vez, como um sinal vivo;
  * - .cartao: um brilho segue o ponteiro;
  * - a barra de progresso e o cabeçalho reagem à rolagem.
- * Quem pede menos movimento vê tudo pronto e parado.
+ * Quem pede menos movimento vê as entradas prontas e paradas; os textos cifrados continuam, mais espaçados.
  */
 export function Animacoes() {
   useEffect(() => {
@@ -42,13 +43,10 @@ export function Animacoes() {
       limpar.push(() => observador.disconnect());
     }
 
-    // O cargo que se decodifica (logo de cara)
-    for (const el of document.querySelectorAll<HTMLElement>('[data-decodificar]')) {
-      if (!calmo) limpar.push(decodificar(el, Number(el.dataset.decodificar) || 0));
-    }
-
-    // Os botões nascem criptografados e se decifram sozinhos ao aparecer; ao passar o mouse, de novo
-    if (!calmo) limpar.push(cifrarBotoes());
+    // Os textos criptografados: o cargo e os botões se decifram ao aparecer; depois, de tempos em tempos.
+    // Vale para todos: trocar letras no lugar não desloca nada na tela (reduzir, não eliminar). Quem pediu
+    // menos movimento recebe o ciclo mais espaçado.
+    limpar.push(textosCifrados(calmo));
 
     // Rolagem: barra de progresso e cabeçalho mais sólido depois do topo
     let quadro = 0;
@@ -84,50 +82,108 @@ export function Animacoes() {
   return null;
 }
 
+const SIMBOLOS = '01#%&/<>[]{}*+=?$▲◆';
+const embaralhar = (texto: string, certas = 0) =>
+  [...texto].map((c, i) => (i < certas || c === ' ' ? c : SIMBOLOS[Math.floor(Math.random() * SIMBOLOS.length)])).join('');
+
+/** Um texto que pode se embaralhar: o nó de texto que muda e o elemento que guarda o rótulo certo (aria-label). */
+interface Cifrado { el: HTMLElement; no: Text; final: string }
+
+function cifrado(el: HTMLElement, origem: HTMLElement = el): Cifrado | null {
+  const no = [...origem.childNodes].find((n): n is Text => n.nodeType === Node.TEXT_NODE && Boolean(n.textContent?.trim()));
+  if (!no) return null;
+  const final = no.textContent!;
+  // o leitor de tela sempre recebe o texto certo, mesmo no meio do embaralhado
+  if (!el.getAttribute('aria-label')) el.setAttribute('aria-label', final.trim());
+  return { el, no, final };
+}
+
 /**
- * Os botões "criptografados": o rótulo vira símbolos e se decifra da esquerda para a direita. Nunca trava
- * nada: o botão funciona o tempo todo, e o leitor de tela recebe o texto certo (aria-label).
+ * Os textos "criptografados": viram símbolos e se decifram da esquerda para a direita. Nunca travam nada:
+ * os botões funcionam o tempo todo.
+ *  - ao entrar em cena: o cargo (com o atraso de [data-decodificar]) e os botões;
+ *  - ao passar o mouse num botão;
+ *  - contínuo: a cada 6 a 9 s (10 a 14 s com movimento reduzido), UM texto visível na tela (sorteado, nunca o mesmo duas vezes seguidas) se
+ *    embaralha e se decifra de novo, como um sinal vivo. Deixa em paz o que está sob o ponteiro ou com o
+ *    foco do teclado, e para com a aba em segundo plano.
  */
-function cifrarBotoes() {
-  const simbolos = '01#%&/<>[]{}*+=?$';
-  const botoes = [...document.querySelectorAll<HTMLElement>('.portfolio .botao')];
-  const rodando = new Map<HTMLElement, number>();
-  const embaralhar = (texto: string) => [...texto].map((c) => (c === ' ' ? c : simbolos[Math.floor(Math.random() * simbolos.length)])).join('');
-  const decifrar = (botao: HTMLElement, duracao: number, espera = 0) => {
-    const no = [...botao.childNodes].find((n) => n.nodeType === Node.TEXT_NODE && n.textContent!.trim());
-    if (!no) return;
-    const final = (botao.dataset.rotulo ??= no.textContent!);
-    if (!botao.getAttribute('aria-label')) botao.setAttribute('aria-label', final.trim());
-    cancelAnimationFrame(rodando.get(botao) ?? 0);
-    no.textContent = embaralhar(final); // já nasce embaralhado, mesmo antes de começar a decifrar
+function textosCifrados(calmo: boolean) {
+  const cargos = [...document.querySelectorAll<HTMLElement>('.portfolio [data-decodificar]')].map((el) => cifrado(el));
+  const botoes = [...document.querySelectorAll<HTMLElement>('.portfolio .botao')].map((el) => cifrado(el));
+  // os rótulos das seções: o rótulo certo fica no <p>, que é o que os títulos das seções referenciam
+  const rotulos = [...document.querySelectorAll<HTMLElement>('.portfolio .rotulo-secao')].map((p) => {
+    const span = p.querySelector<HTMLElement>('span');
+    return span ? cifrado(p, span) : null;
+  });
+  const todos = [...cargos, ...botoes, ...rotulos].filter((c): c is Cifrado => c !== null);
+  const porElemento = new Map(todos.map((c) => [c.el, c]));
+  const rodando = new Map<Cifrado, number>();
+
+  const decifrar = (c: Cifrado, duracao: number, espera = 0) => {
+    cancelAnimationFrame(rodando.get(c) ?? 0);
+    c.no.textContent = embaralhar(c.final); // já nasce embaralhado, mesmo antes de começar a decifrar
     const inicio = performance.now() + espera;
     const passo = (agora: number) => {
       const t = Math.max(0, Math.min(1, (agora - inicio) / duracao));
-      const certas = Math.floor(t * final.length);
-      no.textContent = [...final].map((c, i) => (i < certas || c === ' ' ? c : simbolos[Math.floor(Math.random() * simbolos.length)])).join('');
-      if (t < 1) rodando.set(botao, requestAnimationFrame(passo));
-      else no.textContent = final;
+      c.no.textContent = t < 1 ? embaralhar(c.final, Math.floor(t * c.final.length)) : c.final;
+      if (t < 1) rodando.set(c, requestAnimationFrame(passo));
+      else rodando.delete(c);
     };
-    rodando.set(botao, requestAnimationFrame(passo));
+    rodando.set(c, requestAnimationFrame(passo));
   };
-  const observador = new IntersectionObserver((entradas) => {
+
+  // A entrada em cena (o cargo e os botões; os rótulos já têm a linha que se desenha)
+  const entrada = new IntersectionObserver((entradas) => {
     for (const e of entradas) {
       if (!e.isIntersecting) continue;
-      // os botões do topo entram em cena com atraso: a decifração acompanha a entrada de cada um
-      const atraso = parseFloat(getComputedStyle(e.target).getPropertyValue('--atraso')) || 0;
-      decifrar(e.target as HTMLElement, 650, atraso + 250);
-      observador.unobserve(e.target);
+      const el = e.target as HTMLElement;
+      const c = porElemento.get(el)!;
+      entrada.unobserve(el);
+      if (el.dataset.decodificar !== undefined) decifrar(c, 900, Number(el.dataset.decodificar) || 0);
+      // os botões do topo entram com atraso: a decifração acompanha a entrada de cada um
+      else decifrar(c, 650, (parseFloat(getComputedStyle(el).getPropertyValue('--atraso')) || 0) + 250);
     }
   }, { threshold: 0.6 });
-  const aoEntrar = (e: Event) => decifrar(e.currentTarget as HTMLElement, 320);
-  for (const b of botoes) {
-    observador.observe(b);
-    b.addEventListener('pointerenter', aoEntrar);
-  }
+  for (const c of [...cargos, ...botoes]) if (c) entrada.observe(c.el);
+
+  // Ao passar o mouse num botão
+  const aoEntrar = (e: Event) => decifrar(porElemento.get(e.currentTarget as HTMLElement)!, 320);
+  for (const c of botoes) c?.el.addEventListener('pointerenter', aoEntrar);
+
+  // O contínuo: quem está visível agora
+  const visiveis = new Set<Cifrado>();
+  const vista = new IntersectionObserver((entradas) => {
+    for (const e of entradas) {
+      const c = porElemento.get(e.target as HTMLElement)!;
+      if (e.isIntersecting) visiveis.add(c);
+      else visiveis.delete(c);
+    }
+  }, { threshold: 1 });
+  todos.forEach((c) => vista.observe(c.el));
+  let ultimo: Cifrado | null = null;
+  let relogio = 0;
+  const agendar = () => {
+    relogio = window.setTimeout(() => {
+      if (!document.hidden) {
+        const ocupado = (c: Cifrado) => rodando.has(c) || c.el.matches(':hover') || c.el.contains(document.activeElement);
+        const opcoes = [...visiveis].filter((c) => c !== ultimo && !ocupado(c));
+        if (opcoes.length) {
+          ultimo = opcoes[Math.floor(Math.random() * opcoes.length)];
+          decifrar(ultimo, 750);
+        }
+      }
+      agendar();
+    }, calmo ? 10000 + Math.random() * 4000 : 6000 + Math.random() * 3000);
+  };
+  agendar();
+
   return () => {
-    observador.disconnect();
-    botoes.forEach((b) => b.removeEventListener('pointerenter', aoEntrar));
+    entrada.disconnect();
+    vista.disconnect();
+    clearTimeout(relogio);
+    for (const c of botoes) c?.el.removeEventListener('pointerenter', aoEntrar);
     rodando.forEach((r) => cancelAnimationFrame(r));
+    todos.forEach((c) => { c.no.textContent = c.final; });
   };
 }
 
@@ -147,33 +203,4 @@ function contar(el: HTMLElement) {
     if (t < 1) requestAnimationFrame(passo);
   };
   requestAnimationFrame(passo);
-}
-
-/** Troca as letras por símbolos e vai acertando da esquerda para a direita. */
-function decodificar(el: HTMLElement, atraso: number) {
-  const final = el.textContent ?? '';
-  const simbolos = '▲◆<>/\\[]{}#*+=01';
-  const duracao = 900;
-  let quadro = 0;
-  let inicio = 0;
-  const passo = (agora: number) => {
-    if (!inicio) inicio = agora;
-    const t = (agora - inicio - atraso) / duracao;
-    if (t < 0) {
-      quadro = requestAnimationFrame(passo);
-      return;
-    }
-    const certas = Math.floor(Math.min(1, t) * final.length);
-    el.textContent = [...final]
-      .map((c, i) => (i < certas || c === ' ' ? c : simbolos[Math.floor(Math.random() * simbolos.length)]))
-      .join('');
-    if (t < 1) quadro = requestAnimationFrame(passo);
-    else el.textContent = final;
-  };
-  el.setAttribute('aria-label', final);
-  quadro = requestAnimationFrame(passo);
-  return () => {
-    cancelAnimationFrame(quadro);
-    el.textContent = final;
-  };
 }

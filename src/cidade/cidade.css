@@ -1,0 +1,103 @@
+/*
+ * A Cidade Neon. Usa as cores, os botões e a telemetria do portfólio (portfolio.css); aqui só o palco.
+ * Nada de backdrop-filter por cima do canvas: numa placa integrada, desfocar o que muda a cada quadro custa caro.
+ */
+.cidade-topo {
+  position: relative;
+  height: 210vh;
+}
+.cidade-palco {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+}
+.cidade-tela {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+/* escurece o lado do texto, para a leitura nunca brigar com a cidade */
+.cidade-palco::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 55%;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(90deg, rgba(3, 6, 5, 0.88) 0%, rgba(3, 6, 5, 0.55) 55%, transparent 95%);
+}
+.cidade-palco::after {
+  content: '';
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 16vh;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(transparent, var(--fundo));
+  opacity: var(--fim, 0);
+}
+.cidade-texto {
+  position: relative;
+  z-index: 2;
+  will-change: transform, opacity;
+}
+.cidade-texto h1,
+.cidade-texto p {
+  text-shadow: 0 1px 14px rgba(3, 6, 5, 0.9);
+}
+.cidade-pagina .telemetria {
+  backdrop-filter: none;
+  background: linear-gradient(270deg, rgba(3, 6, 5, 0.88), rgba(3, 6, 5, 0.6));
+}
+.cidade-saida {
+  position: absolute;
+  z-index: 3;
+  top: max(1.1rem, env(safe-area-inset-top));
+  left: max(1.25rem, calc((100vw - 72rem) / 2 + 2rem));
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: rgba(232, 241, 236, 0.6);
+  transition: color 0.25s;
+}
+.cidade-saida:hover,
+.cidade-saida:focus-visible {
+  color: var(--verde-claro);
+}
+.cidade-saida span {
+  opacity: 0.4;
+}
+.cidade-role {
+  position: absolute;
+  z-index: 2;
+  left: 50%;
+  bottom: 1.6rem;
+  transform: translateX(-50%);
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: 0.6rem;
+  letter-spacing: 0.3em;
+  color: var(--texto-fraco);
+}
+
+@media (max-width: 767px) {
+  .cidade-palco {
+    align-items: flex-end;
+    padding-bottom: 8vh;
+  }
+  .cidade-palco::before {
+    width: 100%;
+    inset: auto 0 0 0;
+    height: 65%;
+    background: linear-gradient(180deg, transparent, rgba(3, 6, 5, 0.7) 40%, rgba(3, 6, 5, 0.92));
+  }
+  .cidade-role {
+    display: none;
+  }
+}
