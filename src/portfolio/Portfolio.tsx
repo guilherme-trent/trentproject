@@ -9,6 +9,7 @@ import { Diagnostico } from './Diagnostico';
 import { Faiscas } from './Faiscas';
 import { Faixa } from './Faixa';
 import { Olho, Telemetria } from './Hud';
+import { PreviaCurriculo } from './PreviaCurriculo';
 import { Seiva } from './Seiva';
 import { VideoArvore } from './VideoArvore';
 import { Vitrine } from './Vitrine';
@@ -95,7 +96,7 @@ function Topo() {
         <div className="mt-9 flex w-fit flex-wrap gap-3">
           <a href="#projetos" className="entra botao botao-principal" style={atraso(1250)}>Ver projetos</a>
           <Link href="/experiencia" className="entra botao" style={atraso(1350)}>Entrar na experiência</Link>
-          <a href={PESSOA.curriculo} className="entra botao" style={atraso(1450)} download>Currículo (PDF)</a>
+          <PreviaCurriculo className="entra botao" style={atraso(1450)} />
         </div>
         <p className="entra mt-8 w-fit font-mono text-[0.72rem] tracking-[0.14em] text-[var(--texto-fraco)]" style={atraso(1650)}>{PESSOA.local}</p>
       </div>
@@ -282,6 +283,7 @@ function Contato() {
         <div className="mt-9 flex flex-wrap justify-center gap-3">
           <a href={PESSOA.linkedin} target="_blank" rel="noreferrer" className="botao">LinkedIn <span aria-hidden="true" className="seta">↗</span></a>
           <a href={PESSOA.github} target="_blank" rel="noreferrer" className="botao">GitHub <span aria-hidden="true" className="seta">↗</span></a>
+          <PreviaCurriculo className="botao" />
           <a href={PESSOA.curriculo} download className="botao botao-principal">Baixar currículo</a>
         </div>
       </div>

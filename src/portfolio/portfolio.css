@@ -169,6 +169,64 @@ html.rolou .cabecalho {
   background: rgba(110, 231, 183, 0.2);
 }
 
+/* ── Prévia do currículo (janela nativa <dialog>, aberta pelo PreviaCurriculo) ─ */
+html:has(.previa-curriculo[open]) {
+  overflow: hidden; /* a página atrás não rola enquanto a prévia está aberta */
+}
+.previa-curriculo {
+  width: min(900px, 100vw);
+  max-width: 100vw;
+  height: 100dvh;
+  max-height: 100dvh;
+  margin: 0 auto;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--texto);
+  overflow: hidden;
+}
+.previa-curriculo[open] {
+  display: flex;
+  flex-direction: column;
+}
+.previa-curriculo::backdrop {
+  background: rgba(3, 6, 5, 0.86);
+  backdrop-filter: blur(6px);
+}
+.previa-barra {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.9rem 1rem;
+  border-bottom: 1px solid var(--borda);
+  background: var(--fundo);
+}
+.previa-folhas {
+  flex: 1;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  padding: 1.25rem 1rem 2.5rem;
+}
+.previa-folha {
+  width: 100%;
+  height: auto;
+  background: #fff;
+  box-shadow: 0 20px 60px -20px rgba(0, 0, 0, 0.8), 0 0 0 1px var(--borda);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .previa-curriculo[open] .previa-folhas {
+    animation: previa-entra 0.35s var(--suave);
+  }
+}
+@keyframes previa-entra {
+  from { opacity: 0; transform: translateY(14px); }
+}
+
 /* ── O vídeo da árvore (capa nítida + vídeo por cima quando já pode tocar) ─ */
 .video-arvore {
   position: absolute;
