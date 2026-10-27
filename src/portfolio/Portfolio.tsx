@@ -6,6 +6,7 @@ import {
   CURIOSIDADE, DESTAQUE, EXPERIENCIA, FERRAMENTAS, FORMACAO, LABORATORIO, PESSOA, PILARES, PROJETOS,
   type Link as LinkDoProjeto, type Projeto,
 } from './conteudo';
+import { Coordenadas } from './Coordenadas';
 import { archivo } from './fontes';
 import { Leds } from './Leds';
 import { Barras, Regua } from './Pecas';
@@ -29,6 +30,7 @@ export function Portfolio() {
         <main>
           <Topo />
           <Pilares />
+          <Letreiro />
           <Projetos />
           <Laboratorio />
           <Experiencia />
@@ -66,6 +68,7 @@ function Topo() {
   return (
     <section id="topo" className="topo listras" aria-labelledby="nome">
       <span className="corte ce" /><span className="corte cd" /><span className="corte be" /><span className="corte bd" />
+      <Coordenadas />
 
       <div className="apresenta">
         <p className="entra id mono" style={atraso(100)}><span className="q" /><span data-cifra="200">Perfil // Brasília, DF · BR</span></p>
@@ -87,6 +90,7 @@ function Topo() {
       </div>
 
       <div className="pendurada entra" style={atraso(300)}>
+        <span className="pontilhado" aria-hidden="true" />
         <span className="cordao" aria-hidden="true" />
         <div className="sombra">
           <div className="etiqueta chanfro">
@@ -99,6 +103,7 @@ function Topo() {
             </div>
           </div>
         </div>
+        <p className="serie mono" aria-hidden="true">Lote 2026 · Série GT-001 · Feito em Brasília</p>
       </div>
 
       <Regua tracos={60} passo={8} altura={10} className="regua-topo" />
@@ -190,8 +195,11 @@ function Laboratorio() {
   ];
   return (
     <section id="laboratorio" className="lab secao" aria-labelledby="titulo-lab">
-      <span className="listras-claras" aria-hidden="true" /><span className="corte-verde" aria-hidden="true" />
-      <CabecalhoSecao numero={2} titulo="Laboratório" id="titulo-lab" lado="Experimentos que moram no site" />
+      <span className="listras-claras" aria-hidden="true" />
+      <div className="lab-topo">
+        <span className="corte-verde" aria-hidden="true" />
+        <CabecalhoSecao numero={2} titulo="Laboratório" id="titulo-lab" lado="Experimentos que moram no site" />
+      </div>
       <div className="grade">
         {experimentos.map((e, i) => (
           <Link key={e.id} href={e.href} className="experimento chanfro" data-revelar style={atraso(i * 110)}>
@@ -215,21 +223,22 @@ function Experiencia() {
       <CabecalhoSecao numero={3} titulo="Experiência" id="titulo-exp" lado="Desde 2020" />
       <ol>
         {EXPERIENCIA.map((x) => (
-          <li key={x.cargo} className="linha" data-revelar>
-            <span className="quando mono">{x.quando}</span>
+          <li key={x.cargo} className={`linha ${x.quando.includes('hoje') ? 'atual' : ''}`} data-revelar>
+            <span className="quando mono">{x.quando}{x.quando.includes('hoje') && <span className="ativo"><span className="led" />Ativo</span>}</span>
             <div><h3 className="condensada">{x.cargo}</h3><p className="onde">{x.onde}</p></div>
             <p>{x.texto}</p>
           </li>
         ))}
       </ol>
-      <p className="curiosidade chanfro" data-revelar><span className="mono">Curiosidade</span><span>{CURIOSIDADE}</span></p>
+      <p className="curiosidade chanfro" data-revelar><span className="mono">Curiosidade</span><span>{CURIOSIDADE}</span><Barras barras={26} altura={18} semente={23} className="claras" /></p>
     </section>
   );
 }
 
 function FormacaoEFerramentas() {
   return (
-    <section className="duas secao" aria-label="Formação e ferramentas">
+    <section className="duas secao escura" aria-label="Formação e ferramentas">
+      <span className="listras-claras" aria-hidden="true" />
       <div>
         <CabecalhoSecao numero={4} titulo="Formação" id="titulo-formacao" />
         <ul className="formacao">
@@ -239,10 +248,11 @@ function FormacaoEFerramentas() {
         </ul>
       </div>
       <div>
-        <CabecalhoSecao numero={5} titulo="Ferramentas" id="titulo-ferramentas" />
+        <CabecalhoSecao numero={5} titulo="Ferramentas" id="titulo-ferramentas" lado={`${FERRAMENTAS.length} itens`} />
         <ul className="chips mono" data-revelar>
           {FERRAMENTAS.map((f) => <li key={f}>{f}</li>)}
         </ul>
+        <Regua tracos={50} passo={8} altura={10} className="regua-ferramentas" />
       </div>
     </section>
   );
@@ -250,18 +260,39 @@ function FormacaoEFerramentas() {
 
 function Contato() {
   return (
-    <section id="contato" className="contato secao" aria-labelledby="titulo-contato">
-      <div>
-        <p className="num mono" data-cifra>{'// 06 · Contato'}</p>
-        <h2 id="titulo-contato" className="condensada">Vamos construir<br />algo juntos?</h2>
-        <a className="email" href={`mailto:${PESSOA.email}`}>{PESSOA.email} <span aria-hidden="true">→</span></a>
-      </div>
-      <div className="links mono">
-        <a href={PESSOA.linkedin} target="_blank" rel="noreferrer">LinkedIn ↗</a>
-        <a href={PESSOA.github} target="_blank" rel="noreferrer">GitHub ↗</a>
-        <a href={PESSOA.curriculo} download>Baixar currículo (PDF) ↓</a>
+    <section id="contato" className="contato secao listras" aria-labelledby="titulo-contato">
+      <span className="cordao-contato" aria-hidden="true" />
+      <div className="contato-etiqueta chanfro" data-revelar>
+        <div className="canhoto" aria-hidden="true"><span className="furo" /><span className="n mono">Nº 006</span></div>
+        <div className="corpo">
+          <div>
+            <p className="num mono" data-cifra>{'// 06 · Contato'}</p>
+            <h2 id="titulo-contato" className="condensada">Vamos construir<br />algo juntos?</h2>
+            <a className="email" href={`mailto:${PESSOA.email}`}>{PESSOA.email} <span aria-hidden="true">→</span></a>
+          </div>
+          <div className="links mono">
+            <a href={PESSOA.linkedin} target="_blank" rel="noreferrer">LinkedIn ↗</a>
+            <a href={PESSOA.github} target="_blank" rel="noreferrer">GitHub ↗</a>
+            <a href={PESSOA.curriculo} download>Baixar currículo (PDF) ↓</a>
+            <Barras barras={26} altura={18} semente={31} className="claras" />
+          </div>
+        </div>
       </div>
     </section>
+  );
+}
+
+/** A faixa preta fina entre os pilares e os projetos: as áreas correndo devagar, como um letreiro de sistema. */
+function Letreiro() {
+  const itens = ['Engenharia', 'Produto', 'Gestão', 'Full Stack', 'Cloud & AI', 'GovTech & EdTech', 'Brasília, DF', 'Remoto · híbrido · presencial'];
+  // duas cópias seguidas: a animação anda metade do trilho e recomeça sem emenda
+  const trilho = [...itens, ...itens];
+  return (
+    <div className="letreiro mono" aria-hidden="true">
+      <div className="letreiro-trilho">
+        {trilho.map((t, i) => <span key={i}><span className="q" />{t}</span>)}
+      </div>
+    </div>
   );
 }
 
