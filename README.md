@@ -9,7 +9,12 @@ tópicos. Em vez de ler sobre arquitetura, performance e experiência, você
 
 Roda no desktop e no celular, com áudio, e se adapta sozinho ao poder da sua GPU.
 
-### ▶ [Viva a experiência: guilhermetrent.com.br](https://guilhermetrent.com.br/)
+### ▶ [Viva a experiência: guilhermetrent.com.br/experiencia](https://guilhermetrent.com.br/experiencia)
+
+Com pressa? A página inicial, [guilhermetrent.com.br](https://guilhermetrent.com.br/), é o portfólio
+para ler em poucos minutos: projetos, experiência e o currículo, que dá para ver sem sair do site.
+Ela abre rápido em qualquer aparelho, porque não depende de WebGL: o conteúdo chega pronto do
+servidor e o movimento vem por cima. O 3D fica a um clique, no Laboratório e num atalho no topo.
 
 ---
 
@@ -40,14 +45,25 @@ a árvore como a deixou.
 
 ### 4. O Reino da Arquitetura: a Metrópole
 Você pilota por uma cidade que se **constrói e se desconstrói em tempo real**
-enquanto o manifesto aparece no caminho. No clímax a realidade dá glitch, a tela
-vira vidro e explode contra a câmera em bullet-time, e os cacos viram poeira
-digital. Com o ponteiro você orquestra essas partículas até forjar a
+enquanto o manifesto aparece no caminho. Ela tem dois distritos: à esquerda a
+**Estrutura**, de Stonehenge ao Viaduto de Millau, e à direita a **Forma**, do
+Taj Mahal ao Burj Khalifa. São 15 obras da humanidade em ordem cronológica, com
+5 veículos passando entre elas nas suas épocas. No fim do túnel bate um
+**coração vivo**, feito do mesmo traço de luz da cidade. Então a realidade dá
+glitch, a tela vira vidro e explode contra a câmera em bullet-time, e os cacos
+viram poeira digital. Com o ponteiro você orquestra essas partículas até forjar a
 **Seiva Pura**, a chave do segundo fruto.
 
 ### 5. Performance e Experience
 🚧 *Em construção.* As transições de entrada já existem; os reinos estão
 chegando nas próximas fases.
+
+## Laboratório: a Cidade Neon
+
+No portfólio mora também um experimento: a
+**[Cidade Neon](https://guilhermetrent.com.br/cidade)**, uma cidade viva desenhada
+só com canvas 2D. Role a página e a câmera desce das nuvens até perto da rua, com
+sete camadas de prédios em profundidade.
 
 ---
 
@@ -80,6 +96,10 @@ integrada comum, não só numa placa de vídeo dedicada.
 - **Responsividade medida.** O primeiro toque retorna em poucos ms e só monta a
   intro depois do próximo paint (medido com a Long Animation Frames API), para
   manter o INP baixo.
+- **A Cidade Neon também é leve.** Prédios, janelas e letreiros são desenhados
+  uma única vez, fora da tela; a cada quadro só se pinta o que se move. E a cidade
+  calcula da frente para trás o que cada camada esconde e só pinta o que aparece:
+  numa GPU integrada, a taxa subiu de 40 para cerca de 55 quadros por segundo.
 
 ## Stack
 
@@ -98,7 +118,9 @@ npm install
 npm run dev
 ```
 
-Abra [http://localhost:3000](http://localhost:3000).
+Abra [http://localhost:3000](http://localhost:3000) para o portfólio,
+[http://localhost:3000/experiencia](http://localhost:3000/experiencia) para a experiência 3D e
+[http://localhost:3000/cidade](http://localhost:3000/cidade) para a Cidade Neon.
 
 Para testar no celular pela mesma rede Wi-Fi, abra o endereço da sua máquina na
 rede (ex.: `http://192.168.1.109:3000`). O projeto já libera as faixas de IP
@@ -115,12 +137,16 @@ privadas comuns no `next.config.ts`.
 
 ```
 src/
-├── app/       Entrada do Next.js (layout, página, estilos globais)
-├── engine/    O motor: canvas, governador de performance, aquecimento de GPU,
-│              coleta de recursos, áudio, stores (Zustand) e registro de cenas
-├── scenes/    As cenas: intro (Big Bang), hub (Yggdrasil), reinos e transições
-├── shaders/   Blocos GLSL reutilizáveis (noise, simplex, voronoi, feixe de energia)
-└── ui/        A camada HTML por cima do 3D: diálogos, HUDs, carregamento
+├── app/        Entrada do Next.js: o portfólio em /, a experiência em /experiencia,
+│               a Cidade Neon em /cidade, ícones, prévia do link (Open Graph), robots,
+│               sitemap e os estilos globais
+├── portfolio/  A página do portfólio: textos (conteudo.ts), seções e animações
+├── cidade/     A Cidade Neon: o motor em canvas 2D (motor.ts) e a página da descida
+├── engine/     O motor: canvas, governador de performance, aquecimento de GPU,
+│               coleta de recursos, áudio, stores (Zustand) e registro de cenas
+├── scenes/     As cenas: intro (Big Bang), hub (Yggdrasil), reinos e transições
+├── shaders/    Blocos GLSL reutilizáveis (noise, simplex, voronoi, feixe de energia)
+└── ui/         A camada HTML por cima do 3D: diálogos, HUDs, carregamento
 ```
 
 Toda cena é declarada primeiro em `src/engine/config/scenes.ts`. Esse manifesto é
