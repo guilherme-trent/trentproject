@@ -195,6 +195,24 @@ html:has(.inicio) {
   .ficha .link { white-space: nowrap; transition: color 0.2s; }
   .ficha .link:hover { color: var(--verde-texto); }
 
+  /* ── Carrossel das telas, na foto da ficha (rolagem nativa com scroll-snap) ── */
+  .carrossel { position: absolute; inset: 0; }
+  .carrossel .trilho { display: flex; height: 100%; overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x mandatory; scrollbar-width: none; }
+  .carrossel .trilho::-webkit-scrollbar { display: none; }
+  .carrossel .trilho:focus-visible { outline: 2px solid var(--verde); outline-offset: -2px; }
+  .carrossel .slide { position: relative; flex: 0 0 100%; margin: 0; overflow: hidden; scroll-snap-align: start; scroll-snap-stop: always; }
+  .carrossel .seta { --c: 8px; position: absolute; top: 50%; display: grid; place-items: center; width: 40px; height: 40px; background: var(--tinta); color: #fff; font-size: 16px; opacity: 0; transform: translateY(-50%); transition: opacity 0.2s, background 0.2s; }
+  .carrossel .anterior { left: 12px; }
+  .carrossel .proxima { right: 12px; }
+  .ficha:hover .carrossel .seta, .carrossel .seta:focus-visible { opacity: 1; }
+  .carrossel .seta:hover { background: var(--verde-texto); }
+  .rodape-carrossel { position: absolute; left: 0; right: 0; bottom: 0; display: flex; align-items: center; gap: 14px; padding: 28px 14px 10px; background: linear-gradient(transparent, rgba(12, 12, 14, 0.8)); color: #fff; font-size: 10px; pointer-events: none; }
+  .rodape-carrossel .legenda { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; letter-spacing: 0.16em; text-transform: uppercase; }
+  .rodape-carrossel .pontos { display: flex; gap: 6px; pointer-events: auto; }
+  .rodape-carrossel .pontos button { width: 14px; height: 13px; padding: 5px 0; background: rgba(255, 255, 255, 0.45); background-clip: content-box; transition: width 0.25s var(--curva), background-color 0.25s; }
+  .rodape-carrossel .pontos button[aria-current='true'] { width: 26px; background-color: var(--verde); }
+  .rodape-carrossel .contador { white-space: nowrap; color: rgba(255, 255, 255, 0.7); }
+
   /* ── A ficha cifrada (Atomtech, sob acordo de confidencialidade): cifra viva no lugar do produto ── */
   .ficha-cifrada .foto { background: var(--tinta); }
   .painel-cifra { position: absolute; inset: -4px 0 0 -2px; margin: 0; overflow: hidden; font-size: 12px; line-height: 1.3; letter-spacing: 0.18em; white-space: pre; color: rgba(31, 163, 92, 0.36); user-select: none; transition: color 0.4s; }
@@ -325,6 +343,7 @@ html.rolou .inicio .cabecalho { border-bottom-color: var(--fio); background: rgb
     .pendurada { min-height: 300px; }
     .cordao { display: none; }
     .projetos .grade, .lab .grade, .duas { grid-template-columns: minmax(0, 1fr); }
+    .carrossel .seta { opacity: 0.85; }
     .exp .linha { grid-template-columns: 1fr; gap: 6px; }
     .contato-etiqueta .corpo { grid-template-columns: 1fr; }
     .contato .links { align-items: flex-start; }

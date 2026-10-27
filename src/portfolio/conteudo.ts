@@ -30,6 +30,12 @@ export interface Link {
   interno?: boolean;
 }
 
+export interface Imagem {
+  src: string;
+  alt: string;
+  legenda?: string;
+}
+
 export interface Projeto {
   id: string;
   nome: string;
@@ -37,7 +43,10 @@ export interface Projeto {
   proposta: string;
   beneficios: { titulo: string; texto: string }[];
   stack: string;
-  imagem: { src: string; alt: string };
+  /** A capa. Nas fichas de projeto, `legenda` aparece sobre a foto no carrossel. */
+  imagem: Imagem;
+  /** Mais telas do projeto, depois da capa: viram o carrossel da ficha. */
+  galeria?: Imagem[];
   links: Link[];
 }
 
@@ -73,7 +82,13 @@ export const PROJETOS: Projeto[] = [
       { titulo: 'Dados de alunos protegidos no próprio banco:', texto: 'cada perfil vê só o que pode, como pede a LGPD.' },
     ],
     stack: 'React · TypeScript · Supabase / PostgreSQL · Vercel · API da Anthropic',
-    imagem: { src: '/portfolio/gamifica.webp', alt: 'Visão geral do Dashboard do Gamifica: alunos, atendimentos, volume por trilha e atendimentos por região (dados fictícios)' },
+    imagem: { src: '/portfolio/gamifica.webp', alt: 'Visão geral do Dashboard do Gamifica: alunos, atendimentos, volume por trilha e atendimentos por região (dados fictícios)', legenda: 'Visão geral' },
+    galeria: [
+      { src: '/portfolio/gamifica/02.webp', alt: 'Lista de alunos com as 7 trilhas de cada um (dados fictícios)', legenda: 'Alunos' },
+      { src: '/portfolio/gamifica/03.webp', alt: 'Ficha do aluno com a presença nas trilhas e os dados pessoais ocultos (dados fictícios)', legenda: 'Ficha do aluno' },
+      { src: '/portfolio/gamifica/04.webp', alt: 'Envio da equipe em revisão, com aprovar, mudar local e rejeitar (dados fictícios)', legenda: 'Revisão e aprovação' },
+      { src: '/portfolio/gamifica/05.webp', alt: 'Importação por foto: a equipe escolhe região, local e turma e fotografa a lista de presença', legenda: 'Importação por foto' },
+    ],
     links: [{ rotulo: 'Ver o projeto', href: 'https://github.com/guilherme-trent/dashboard-gamifica' }],
   },
   {
@@ -88,7 +103,14 @@ export const PROJETOS: Projeto[] = [
       { titulo: 'Painel para a equipe,', texto: 'com papéis, revisão e histórico de cada alteração.' },
     ],
     stack: 'Next.js · TypeScript · Neon / PostgreSQL · Better Auth · Cloudflare R2 · Vercel',
-    imagem: { src: '/portfolio/sunvoid.webp', alt: 'A seleção de agentes de SUNVOID: retrato grande da agente à esquerda e a grade de ícones à direita' },
+    imagem: { src: '/portfolio/sunvoid.webp', alt: 'A seleção de agentes de SUNVOID no tema escuro, com o Lighter selecionado: retrato grande à esquerda e a grade de ícones à direita', legenda: 'Seleção de agentes' },
+    galeria: [
+      { src: '/portfolio/sunvoid/02.webp', alt: 'Página do agente Lighter, com o retrato, a fala e as vozes oficiais', legenda: 'Página do agente' },
+      { src: '/portfolio/sunvoid/03.webp', alt: 'Build verificada do Lighter: discos, motores-W e atributos principais', legenda: 'Builds verificadas' },
+      { src: '/portfolio/sunvoid/04.webp', alt: 'Notícias do jogo reunidas num lugar só, e os criadores parceiros numa aba', legenda: 'Notícias' },
+      { src: '/portfolio/sunvoid/05.webp', alt: 'Ofertas de jogos: grátis para resgatar e promoções escolhidas pela equipe', legenda: 'Ofertas' },
+      { src: '/portfolio/sunvoid/06.webp', alt: 'Página de apoio: Pix pelo Mercado Pago, com cargos no Discord entregues sozinhos', legenda: 'Apoio com Pix' },
+    ],
     // Repositório privado: só o site.
     links: [{ rotulo: 'Ver o site', href: 'https://sunvoid.com.br' }],
   },
@@ -103,7 +125,13 @@ export const PROJETOS: Projeto[] = [
       { titulo: 'Publique com tranquilidade:', texto: 'consentimento e direitos de imagem já vêm embutidos.' },
     ],
     stack: 'Node.js · TypeScript · Fastify · PostgreSQL · AWS · Pix',
-    imagem: { src: '/portfolio/vault.webp', alt: 'Tela de novo vídeo do Vault Project, com os três modos: Grave você, Colaboração e Recriar trend' },
+    imagem: { src: '/portfolio/vault.webp', alt: 'Tela de novo vídeo do Vault Project, com os três modos: Grave você, Colaboração e Recriar trend', legenda: 'Novo vídeo' },
+    galeria: [
+      { src: '/portfolio/vault/02.webp', alt: 'Personagens: cada um nasce com 4 imagens de referência, com o mesmo rosto em todos os ângulos', legenda: 'Personagens' },
+      { src: '/portfolio/vault/03.webp', alt: 'Fila de vídeos: a etapa de cada um, e um vídeo barrado pela proteção de consentimento, sem cobrança', legenda: 'Fila' },
+      { src: '/portfolio/vault/04.webp', alt: 'Créditos: pacotes comprados por Pix e o extrato completo', legenda: 'Créditos' },
+      { src: '/portfolio/vault/05.webp', alt: 'O que o convidado vê: lê o termo, tira a selfie e autoriza, sem precisar de conta', legenda: 'Convite do colaborador' },
+    ],
     links: [{ rotulo: 'Ver o projeto', href: 'https://github.com/guilherme-trent/vault-project' }],
   },
   {
@@ -117,7 +145,12 @@ export const PROJETOS: Projeto[] = [
       { titulo: 'Estatísticas claras', texto: 'de como o negócio está indo.' },
     ],
     stack: 'React Native (Expo) · TypeScript · Supabase',
-    imagem: { src: '/portfolio/cotton.webp', alt: 'Três telas do aplicativo Cotton Project: itens de uma operação, faturamento com mapa de operações e clientes (dados fictícios)' },
+    imagem: { src: '/portfolio/cotton.webp', alt: 'Três telas do aplicativo Cotton Project: itens de uma operação, faturamento com mapa de operações e clientes (dados fictícios)', legenda: 'Faturamento e clientes' },
+    galeria: [
+      { src: '/portfolio/cotton/02.webp', alt: 'Três telas do Cotton Project: painel, estatísticas e inventário (dados fictícios)', legenda: 'Painel e estatísticas' },
+      { src: '/portfolio/cotton/03.webp', alt: 'Três telas de uma operação: cliente, fechamento com pagamento e perfil do negócio (dados fictícios)', legenda: 'Do cliente ao fechamento' },
+      { src: '/portfolio/cotton/04.webp', alt: 'Os documentos que o app gera: contrato de prestação de serviços, recibo e relatório (dados fictícios)', legenda: 'Documentos gerados' },
+    ],
     links: [{ rotulo: 'Ver o projeto', href: 'https://github.com/guilherme-trent/cotton-project' }],
   },
   {
@@ -132,7 +165,12 @@ export const PROJETOS: Projeto[] = [
       { titulo: 'Contra o computador, a dois no mesmo aparelho ou online.', texto: '' },
     ],
     stack: 'Python · Pyodide · JavaScript',
-    imagem: { src: '/portfolio/duelo.webp', alt: 'O Duelo AFK no navegador: o terminal de combate narra o duelo, com a vida dos dois duelistas embaixo' },
+    imagem: { src: '/portfolio/duelo.webp', alt: 'O Duelo AFK no navegador: o terminal de combate narra o duelo, com a vida dos dois duelistas embaixo', legenda: 'Combate' },
+    galeria: [
+      { src: '/portfolio/duelo/02.webp', alt: 'Menu do Duelo AFK: contra o computador, a dois, demonstração, como jogar e ranking', legenda: 'Menu' },
+      { src: '/portfolio/duelo/03.webp', alt: 'Escolha entre as 9 armas, cada uma com o seu dano e o seu efeito', legenda: '9 armas' },
+      { src: '/portfolio/duelo/04.webp', alt: 'A loja entre os duelos: forja, armadura, runas, poções e bomba de fumaça', legenda: 'Loja' },
+    ],
     // Quando a V3 for publicada, entra o botão "Jogar" (o jogo abre dentro do site, em /duelo).
     links: [{ rotulo: 'Código', href: 'https://github.com/guilherme-trent/Game-PVP' }],
   },

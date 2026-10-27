@@ -2,6 +2,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import type { CSSProperties } from 'react';
 import { Animacoes } from './Animacoes';
+import { Carrossel } from './Carrossel';
 import {
   CONFIDENCIAL, CURIOSIDADE, DESTAQUE, EXPERIENCIA, FERRAMENTAS, FORMACAO, LABORATORIO, PESSOA, PILARES, PROJETOS,
   type Link as LinkDoProjeto, type Projeto,
@@ -207,7 +208,7 @@ function Ficha({ projeto: p, indice, total }: { projeto: Projeto; indice: number
   return (
     <article className="ficha chanfro" data-revelar style={atraso((indice % 2) * 110)}>
       <div className="foto">
-        <Image src={p.imagem.src} alt={p.imagem.alt} fill sizes="(min-width: 981px) 45vw, 100vw" />
+        <Carrossel imagens={[p.imagem, ...(p.galeria ?? [])]} nome={p.nome} />
         <span className="selo mono">{p.selo === 'em produção' && <span className="led" />}{p.selo}</span>
       </div>
       <div className="corpo">
