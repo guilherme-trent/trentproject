@@ -190,7 +190,8 @@ html:has(.inicio) {
   .ficha li b { font-weight: 600; color: var(--tinta); }
   .ficha .pe { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-top: auto; padding-top: 22px; border-top: 1px solid var(--fio); }
   .ficha ol + .pe { margin-top: 22px; }
-  .ficha .stack { color: var(--suave); font-size: 10px; letter-spacing: 0.16em; }
+  .ficha .pe { flex-wrap: wrap; row-gap: 12px; }
+  .ficha .stack { flex: 1 1 240px; color: var(--suave); font-size: 10px; letter-spacing: 0.16em; } /* sem espaço para a stack, os links descem */
   .ficha .links { display: flex; gap: 18px; }
   .ficha .link { white-space: nowrap; transition: color 0.2s; }
   .ficha .link:hover { color: var(--verde-texto); }

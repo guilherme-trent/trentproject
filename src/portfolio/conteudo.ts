@@ -111,8 +111,11 @@ export const PROJETOS: Projeto[] = [
       { src: '/portfolio/sunvoid/05.webp', alt: 'Ofertas de jogos: grátis para resgatar e promoções escolhidas pela equipe', legenda: 'Ofertas' },
       { src: '/portfolio/sunvoid/06.webp', alt: 'Página de apoio: Pix pelo Mercado Pago, com cargos no Discord entregues sozinhos', legenda: 'Apoio com Pix' },
     ],
-    // Repositório privado: só o site.
-    links: [{ rotulo: 'Ver o site', href: 'https://sunvoid.com.br' }],
+    // O código é privado: o projeto aponta para a vitrine.
+    links: [
+      { rotulo: 'Ver o site', href: 'https://sunvoid.com.br' },
+      { rotulo: 'Ver o projeto', href: 'https://github.com/guilherme-trent/sunvoid' },
+    ],
   },
   {
     id: 'vault',
