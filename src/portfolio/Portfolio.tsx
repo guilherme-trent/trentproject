@@ -7,6 +7,7 @@ import {
   type Link as LinkDoProjeto, type Projeto,
 } from './conteudo';
 import { Coordenadas } from './Coordenadas';
+import { FaviconVivo } from './FaviconVivo';
 import { archivo } from './fontes';
 import { Leds } from './Leds';
 import { Barras, Regua } from './Pecas';
@@ -40,6 +41,7 @@ export function Portfolio() {
         <Rodape />
       </div>
       <Animacoes />
+      <FaviconVivo />
     </div>
   );
 }
