@@ -254,9 +254,10 @@ function LinkFicha({ link: l }: { link: LinkDoProjeto }) {
 
 function Laboratorio() {
   const { cidade } = LABORATORIO;
+  // foco: o ponto da imagem que fica no quadro quando o cartão a recorta (a copa da árvore; a torre de anéis da cidade)
   const experimentos = [
-    { id: 'EXP — 01', selo: DESTAQUE.selo, nome: DESTAQUE.nome, texto: DESTAQUE.proposta, href: '/experiencia', imagem: DESTAQUE.imagem, largo: true },
-    { id: 'EXP — 02', selo: cidade.selo.replace('experimento · ', ''), nome: cidade.nome, texto: cidade.proposta, href: cidade.href, imagem: { src: '/portfolio/cidade.webp', alt: 'A Cidade Neon, desenhada em canvas 2D' }, largo: false },
+    { id: 'EXP — 01', selo: DESTAQUE.selo, nome: DESTAQUE.nome, texto: DESTAQUE.proposta, href: '/experiencia', imagem: DESTAQUE.imagem, foco: '50% 0%', largo: true },
+    { id: 'EXP — 02', selo: cidade.selo.replace('experimento · ', ''), nome: cidade.nome, texto: cidade.proposta, href: cidade.href, imagem: { src: '/portfolio/cidade.webp', alt: 'A Cidade Neon, desenhada em canvas 2D' }, foco: '72% 40%', largo: false },
   ];
   return (
     <section id="laboratorio" className="lab secao" aria-labelledby="titulo-lab">
@@ -268,7 +269,7 @@ function Laboratorio() {
       <div className="grade">
         {experimentos.map((e, i) => (
           <Link key={e.id} href={e.href} className="experimento chanfro" data-revelar style={atraso(i * 110)}>
-            <Image src={e.imagem.src} alt={e.imagem.alt} fill sizes={e.largo ? '(min-width: 981px) 55vw, 100vw' : '(min-width: 981px) 42vw, 100vw'} />
+            <Image src={e.imagem.src} alt={e.imagem.alt} fill sizes={e.largo ? '(min-width: 981px) 55vw, 100vw' : '(min-width: 981px) 42vw, 100vw'} style={{ objectPosition: e.foco, transformOrigin: e.foco }} />
             <span className="entrar mono">Entrar →</span>
             <span className="info">
               <span className="mono">{e.id} · {e.selo}</span>
