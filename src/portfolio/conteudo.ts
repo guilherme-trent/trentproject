@@ -103,13 +103,12 @@ export const PROJETOS: Projeto[] = [
       { titulo: 'Painel para a equipe,', texto: 'com papéis, revisão e histórico de cada alteração.' },
     ],
     stack: 'Next.js · TypeScript · Neon / PostgreSQL · Better Auth · Cloudflare R2 · Vercel',
-    imagem: { src: '/portfolio/sunvoid.webp', alt: 'A seleção de agentes de SUNVOID no tema escuro, com o Lighter selecionado: retrato grande à esquerda e a grade de ícones à direita', legenda: 'Seleção de agentes' },
+    imagem: { src: '/portfolio/sunvoid/selecao.webp', alt: 'A seleção de agentes de SUNVOID no tema escuro, com o Pan Yinhu selecionado: retrato grande à esquerda e a grade de ícones à direita', legenda: 'Seleção de agentes' },
     galeria: [
-      { src: '/portfolio/sunvoid/02.webp', alt: 'Página do agente Lighter, com o retrato, a fala e as vozes oficiais', legenda: 'Página do agente' },
-      { src: '/portfolio/sunvoid/03.webp', alt: 'Build verificada do Lighter: discos, motores-W e atributos principais', legenda: 'Builds verificadas' },
-      { src: '/portfolio/sunvoid/04.webp', alt: 'Notícias do jogo reunidas num lugar só, e os criadores parceiros numa aba', legenda: 'Notícias' },
-      { src: '/portfolio/sunvoid/05.webp', alt: 'Ofertas de jogos: grátis para resgatar e promoções escolhidas pela equipe', legenda: 'Ofertas' },
-      { src: '/portfolio/sunvoid/06.webp', alt: 'Página de apoio: Pix pelo Mercado Pago, com cargos no Discord entregues sozinhos', legenda: 'Apoio com Pix' },
+      { src: '/portfolio/sunvoid/builds.webp', alt: 'Build verificada do Lighter: discos, motores-W e atributos principais', legenda: 'Builds verificadas' },
+      { src: '/portfolio/sunvoid/noticias.webp', alt: 'Notícias do jogo reunidas num lugar só, e os criadores parceiros numa aba', legenda: 'Notícias' },
+      { src: '/portfolio/sunvoid/ofertas.webp', alt: 'Ofertas de jogos: grátis para resgatar e promoções escolhidas pela equipe', legenda: 'Ofertas' },
+      { src: '/portfolio/sunvoid/apoie.webp', alt: 'Página de apoio: Pix pelo Mercado Pago, com cargos no Discord entregues sozinhos', legenda: 'Apoio com Pix' },
     ],
     // O código é privado: o projeto aponta para a vitrine.
     links: [
