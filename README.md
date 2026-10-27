@@ -132,3 +132,9 @@ O site é publicado na [Vercel](https://vercel.com) em
 [guilhermetrent.com.br](https://guilhermetrent.com.br/) (domínio próprio; o endereço antigo
 [trentproject.vercel.app](https://trentproject.vercel.app/) continua funcionando), a partir da branch
 `main`: cada push gera um novo deploy automaticamente.
+
+## Direitos
+
+Código público para leitura e avaliação, **sem licença de uso**: todos os direitos reservados.
+Copiar, reaproveitar o visual ou os textos, ou usar o projeto para treinar IA depende de autorização
+por escrito. Detalhes em [LICENSE](LICENSE).

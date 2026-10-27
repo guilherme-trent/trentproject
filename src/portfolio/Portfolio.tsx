@@ -301,7 +301,7 @@ function Letreiro() {
 function Rodape() {
   return (
     <footer className="rodape mono">
-      <p>© {new Date().getFullYear()} {PESSOA.nome}</p>
+      <p>© {new Date().getFullYear()} {PESSOA.nome} · Todos os direitos reservados</p>
       <p>A <Link href="/experiencia">experiência 3D</Link> roda no Regente, o meu motor próprio.</p>
     </footer>
   );
