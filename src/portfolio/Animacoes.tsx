@@ -61,9 +61,36 @@ const embaralhar = (texto: string, certas = 0) =>
  * A ficha cifrada: o texto de [data-sigilo] já é cifra (não há texto certo por trás). A cada batida, 90 ms
  * (400 ms com movimento reduzido), cerca de 1 símbolo em 8 troca; espaços, pontos e quebras de linha ficam.
  * Só mexe no que está na tela e com a aba à vista.
+ * O painel da foto (.painel-cifra) é refeito no tamanho da foto: as linhas e colunas que cabem inteiras, sem
+ * faixa vazia embaixo nem símbolo cortado no canto. Ele se refaz quando a foto muda de tamanho.
  */
 function sigilo(calmo: boolean) {
   const alvos = [...document.querySelectorAll<HTMLElement>('.inicio [data-sigilo]')].map((el) => ({ el, letras: [...(el.textContent ?? '')] }));
+  const sorteado = () => SIMBOLOS[Math.floor(Math.random() * SIMBOLOS.length)];
+
+  const caber = (a: (typeof alvos)[number]) => {
+    const estilo = getComputedStyle(a.el);
+    const regua = document.createElement('span');
+    regua.style.cssText = 'position:absolute;visibility:hidden;white-space:pre';
+    regua.textContent = 'M'.repeat(40);
+    a.el.appendChild(regua);
+    const largura = regua.getBoundingClientRect().width / 40; // um símbolo com o espaçamento entre letras
+    regua.remove();
+    const altura = parseFloat(estilo.lineHeight);
+    const colunas = Math.floor((a.el.clientWidth - parseFloat(estilo.paddingLeft) - parseFloat(estilo.paddingRight)) / largura);
+    const linhas = Math.floor((a.el.clientHeight - parseFloat(estilo.paddingTop) - parseFloat(estilo.paddingBottom)) / altura);
+    if (colunas < 1 || linhas < 1) return;
+    a.letras = [...Array.from({ length: linhas }, () => Array.from({ length: colunas }, sorteado).join('')).join('\n')];
+    a.el.textContent = a.letras.join('');
+  };
+  const paineis = alvos.filter((a) => a.el.matches('.painel-cifra'));
+  const medida = new ResizeObserver((entradas) => {
+    for (const e of entradas) caber(paineis.find((a) => a.el === e.target)!);
+  });
+  paineis.forEach((a) => medida.observe(a.el));
+  // a largura do símbolo depende da fonte mono: mede de novo quando ela terminar de carregar
+  document.fonts?.ready.then(() => paineis.forEach(caber));
+
   const visiveis = new Set<Element>();
   const vista = new IntersectionObserver((entradas) => {
     for (const e of entradas) {
@@ -76,13 +103,14 @@ function sigilo(calmo: boolean) {
     if (document.hidden) return;
     for (const a of alvos) {
       if (!visiveis.has(a.el)) continue;
-      a.letras = a.letras.map((c) => (SIMBOLOS.includes(c) && Math.random() < 0.12 ? SIMBOLOS[Math.floor(Math.random() * SIMBOLOS.length)] : c));
+      a.letras = a.letras.map((c) => (SIMBOLOS.includes(c) && Math.random() < 0.12 ? sorteado() : c));
       a.el.textContent = a.letras.join('');
     }
   }, calmo ? 400 : 90);
   return () => {
     clearInterval(relogio);
     vista.disconnect();
+    medida.disconnect();
   };
 }
 

@@ -216,7 +216,7 @@ html:has(.inicio) {
 
   /* ── A ficha cifrada (Atomtech, sob acordo de confidencialidade): cifra viva no lugar do produto ── */
   .ficha-cifrada .foto { background: var(--tinta); }
-  .painel-cifra { position: absolute; inset: -4px 0 0 -2px; margin: 0; overflow: hidden; font-size: 12px; line-height: 1.3; letter-spacing: 0.18em; white-space: pre; color: rgba(31, 163, 92, 0.36); user-select: none; transition: color 0.4s; }
+  .painel-cifra { position: absolute; inset: 0; box-sizing: border-box; margin: 0; padding: 12px 14px; overflow: hidden; font-size: 12px; line-height: 1.3; letter-spacing: 0.18em; white-space: pre; color: rgba(31, 163, 92, 0.36); user-select: none; transition: color 0.4s; }
   .ficha-cifrada:hover .painel-cifra { color: rgba(31, 163, 92, 0.55); }
   .ficha-cifrada .varredura { position: absolute; left: 0; right: 0; top: 0; height: 30%; background: linear-gradient(transparent, rgba(31, 163, 92, 0.2)); border-bottom: 1px solid rgba(31, 163, 92, 0.6); animation: varrer 4.5s linear infinite; pointer-events: none; }
   .carimbo { position: absolute; left: 50%; top: 50%; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 10px 24px 12px; border: 3px solid #fff; background: rgba(12, 12, 14, 0.72); color: #fff; font-size: clamp(28px, 3.4vw, 46px); line-height: 1; text-transform: uppercase; letter-spacing: 0.04em; transform: translate(-50%, -50%) rotate(-6deg); }
