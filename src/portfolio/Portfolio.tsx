@@ -3,7 +3,7 @@ import Link from 'next/link';
 import type { CSSProperties } from 'react';
 import { Animacoes } from './Animacoes';
 import {
-  CURIOSIDADE, DESTAQUE, EXPERIENCIA, FERRAMENTAS, FORMACAO, LABORATORIO, PESSOA, PILARES, PROJETOS,
+  CONFIDENCIAL, CURIOSIDADE, DESTAQUE, EXPERIENCIA, FERRAMENTAS, FORMACAO, LABORATORIO, PESSOA, PILARES, PROJETOS,
   type Link as LinkDoProjeto, type Projeto,
 } from './conteudo';
 import { Coordenadas } from './Coordenadas';
@@ -149,13 +149,57 @@ function CabecalhoSecao({ numero, titulo, id, lado }: { numero: number; titulo: 
 
 function Projetos() {
   const emProducao = PROJETOS.filter((p) => p.selo === 'em produção').length;
+  // null = a ficha cifrada, no lugar dela na grade
+  const fichas: (Projeto | null)[] = [...PROJETOS];
+  fichas.splice(CONFIDENCIAL.posicao, 0, null);
   return (
     <section id="projetos" className="projetos secao" aria-labelledby="titulo-projetos">
-      <CabecalhoSecao numero={1} titulo="Projetos" id="titulo-projetos" lado={`${PROJETOS.length} fichas · ${emProducao} em produção`} />
+      <CabecalhoSecao numero={1} titulo="Projetos" id="titulo-projetos" lado={`${fichas.length} fichas · ${emProducao} em produção`} />
       <div className="grade">
-        {PROJETOS.map((p, i) => <Ficha key={p.id} projeto={p} indice={i} total={PROJETOS.length} />)}
+        {fichas.map((p, i) => p
+          ? <Ficha key={p.id} projeto={p} indice={i} total={fichas.length} />
+          : <FichaCifrada key="confidencial" indice={i} total={fichas.length} />)}
       </div>
     </section>
+  );
+}
+
+/** Símbolos de sistema, sempre os mesmos para a mesma semente (o HTML do servidor e o do navegador batem). */
+function cifraFixa(tamanho: number, semente: number) {
+  const simbolos = 'ABCDEFGHJKLMNPQRSTUVWXYZ0123456789/<>#*+=';
+  let s = semente;
+  return Array.from({ length: tamanho }, () => simbolos[(s = (s * 9301 + 49297) % 233280) % simbolos.length]).join('');
+}
+
+/**
+ * A ficha da Atomtech: o mesmo molde das outras, com tudo o que é do produto trocado por cifra viva
+ * ([data-sigilo], que o Animacoes embaralha sem parar). O leitor de tela ouve só "conteúdo confidencial".
+ */
+function FichaCifrada({ indice, total }: { indice: number; total: number }) {
+  const painel = Array.from({ length: 24 }, (_, i) => cifraFixa(96, 101 + i * 7)).join('\n');
+  return (
+    <article className="ficha ficha-cifrada chanfro" data-revelar style={atraso((indice % 2) * 110)} aria-label="Projeto confidencial">
+      <div className="foto" aria-hidden="true">
+        <pre className="painel-cifra mono" data-sigilo>{painel}</pre>
+        <span className="varredura" />
+        <span className="carimbo condensada">Confidencial<small className="mono">NDA · acesso restrito</small></span>
+        <span className="selo mono"><span className="cadeado" />{CONFIDENCIAL.selo}</span>
+      </div>
+      <div className="corpo">
+        <p className="id mono"><span>PROJ — {n2(indice)}</span><span>Ficha {n2(indice)} / {String(total).padStart(2, '0')}</span></p>
+        <h3 className="condensada" aria-label="Projeto confidencial"><span data-sigilo aria-hidden="true">{cifraFixa(11, 31)}</span></h3>
+        <p className="proposta">{CONFIDENCIAL.proposta}</p>
+        <ol aria-label="Conteúdo confidencial">
+          {CONFIDENCIAL.linhas.map((tamanho, j) => (
+            <li key={j} aria-hidden="true"><span className="mono">{n2(j)}</span><span className="tarja mono" data-sigilo>{cifraFixa(tamanho, 57 + j * 13)}</span></li>
+          ))}
+        </ol>
+        <div className="pe">
+          <p className="stack mono" aria-label="Stack confidencial"><span data-sigilo aria-hidden="true">{cifraFixa(5, 3)} · {cifraFixa(8, 5)} · {cifraFixa(6, 9)}</span></p>
+          <span className="restrito mono"><span className="cadeado" />Acesso restrito</span>
+        </div>
+      </div>
+    </article>
   );
 }
 

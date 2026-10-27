@@ -77,6 +77,22 @@ export const PROJETOS: Projeto[] = [
     links: [{ rotulo: 'Ver o projeto', href: 'https://github.com/guilherme-trent/dashboard-gamifica' }],
   },
   {
+    id: 'sunvoid',
+    nome: 'SUNVOID',
+    selo: 'em produção',
+    proposta:
+      'A plataforma da comunidade brasileira de Zenless Zone Zero: builds, tier list, times, guias e notícias num só lugar.',
+    beneficios: [
+      { titulo: 'Entra com a conta do Discord,', texto: 'e site e servidor conversam: cargos, avisos e notícias chegam sozinhos.' },
+      { titulo: 'Tier list com o cálculo aberto:', texto: 'cada nota de 0 a 100 mostra de onde veio.' },
+      { titulo: 'Painel para a equipe,', texto: 'com papéis, revisão e histórico de cada alteração.' },
+    ],
+    stack: 'Next.js · TypeScript · Neon / PostgreSQL · Better Auth · Cloudflare R2 · Vercel',
+    imagem: { src: '/portfolio/sunvoid.webp', alt: 'A seleção de agentes de SUNVOID: retrato grande da agente à esquerda e a grade de ícones à direita' },
+    // Repositório privado: só o site.
+    links: [{ rotulo: 'Ver o site', href: 'https://sunvoid.com.br' }],
+  },
+  {
     id: 'vault',
     nome: 'Vault Project',
     selo: 'em desenvolvimento',
@@ -121,6 +137,20 @@ export const PROJETOS: Projeto[] = [
     links: [{ rotulo: 'Código', href: 'https://github.com/guilherme-trent/Game-PVP' }],
   },
 ];
+
+/**
+ * A ficha cifrada: o produto da Atomtech, sob acordo de confidencialidade. Nome, benefícios e stack não
+ * existem nem no código: a página desenha símbolos que se embaralham sem parar e nunca se decifram.
+ * `posicao` é onde ela entra na grade (fecha os pares no PC).
+ */
+export const CONFIDENCIAL = {
+  selo: 'confidencial',
+  posicao: 4,
+  proposta:
+    'Produto da Atomtech Energia Solar e Tecnologia, em que lidero produto e programação. Está sob acordo de confidencialidade, então a ficha fica cifrada.',
+  /** Tamanho (em símbolos) de cada linha tarjada. */
+  linhas: [34, 27, 31],
+};
 
 export const EXPERIENCIA = [
   {

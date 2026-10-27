@@ -195,6 +195,19 @@ html:has(.inicio) {
   .ficha .link { white-space: nowrap; transition: color 0.2s; }
   .ficha .link:hover { color: var(--verde-texto); }
 
+  /* ── A ficha cifrada (Atomtech, sob acordo de confidencialidade): cifra viva no lugar do produto ── */
+  .ficha-cifrada .foto { background: var(--tinta); }
+  .painel-cifra { position: absolute; inset: -4px 0 0 -2px; margin: 0; overflow: hidden; font-size: 12px; line-height: 1.3; letter-spacing: 0.18em; white-space: pre; color: rgba(31, 163, 92, 0.36); user-select: none; transition: color 0.4s; }
+  .ficha-cifrada:hover .painel-cifra { color: rgba(31, 163, 92, 0.55); }
+  .ficha-cifrada .varredura { position: absolute; left: 0; right: 0; top: 0; height: 30%; background: linear-gradient(transparent, rgba(31, 163, 92, 0.2)); border-bottom: 1px solid rgba(31, 163, 92, 0.6); animation: varrer 4.5s linear infinite; pointer-events: none; }
+  .carimbo { position: absolute; left: 50%; top: 50%; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 10px 24px 12px; border: 3px solid #fff; background: rgba(12, 12, 14, 0.72); color: #fff; font-size: clamp(28px, 3.4vw, 46px); line-height: 1; text-transform: uppercase; letter-spacing: 0.04em; transform: translate(-50%, -50%) rotate(-6deg); }
+  .carimbo small { font-size: 10px; letter-spacing: 0.24em; color: var(--verde); }
+  .cadeado { position: relative; flex: none; width: 8px; height: 6px; margin-top: 4px; border-radius: 1px; background: currentColor; }
+  .cadeado::before { content: ''; position: absolute; left: 1.5px; bottom: 5px; width: 5px; height: 5px; box-sizing: border-box; border: 1.5px solid currentColor; border-bottom: 0; border-radius: 3px 3px 0 0; }
+  .ficha-cifrada h3 { letter-spacing: 0.04em; }
+  .ficha-cifrada li .tarja { justify-self: start; max-width: 100%; overflow: hidden; padding: 1px 8px; background: var(--tinta); color: rgba(255, 255, 255, 0.55); font-size: 12px; letter-spacing: 0.14em; white-space: nowrap; }
+  .ficha-cifrada .restrito { display: flex; align-items: center; gap: 8px; white-space: nowrap; color: var(--suave); }
+
   /* ── Laboratório (escuro) ── */
   .lab { position: relative; overflow: hidden; background: var(--tinta); color: #fff; }
   .lab-topo { position: relative; }
@@ -295,12 +308,14 @@ html.rolou .inicio .cabecalho { border-bottom-color: var(--fio); background: rgb
   .inicio .sombra { animation-duration: 12s; }
   .inicio .led { animation-duration: 3.2s; }
   .inicio .letreiro-trilho { animation-duration: 160s; }
+  .inicio .ficha-cifrada .varredura { animation-duration: 9s; }
 }
 
 @keyframes subir { from { opacity: 0; transform: translateY(16px); } }
 @keyframes balanco { 0%, 100% { transform: rotate(-0.6deg); } 50% { transform: rotate(0.6deg); } }
 @keyframes correr { to { transform: translateX(-25%); } } /* uma cópia das quatro do letreiro */
 @keyframes piscar { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+@keyframes varrer { from { transform: translateY(-100%); } to { transform: translateY(340%); } }
 @keyframes previa-entra { from { opacity: 0; transform: translateY(12px); } }
 
 /* ── Tablet e celular ── */

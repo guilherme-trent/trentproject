@@ -7,6 +7,7 @@ import { useEffect } from 'react';
  * - [data-revelar]: entra em cena quando aparece na tela (a classe `revelado` dispara o CSS);
  * - [data-cifra]: os rótulos de sistema se embaralham e se decifram ao aparecer, ao passar o mouse e,
  *   de tempos em tempos, um de cada vez, como um sinal vivo;
+ * - [data-sigilo]: a ficha confidencial, cifra que se embaralha sem parar e nunca se decifra;
  * - o cabeçalho fica mais sólido depois do topo (classe `rolou`).
  * Quem pede menos movimento vê as entradas prontas e paradas; os textos cifrados continuam, mais espaçados
  * (trocar letras no lugar não desloca nada na tela: reduzir, não eliminar).
@@ -35,6 +36,7 @@ export function Animacoes() {
     }
 
     limpar.push(textosCifrados(calmo));
+    limpar.push(sigilo(calmo));
 
     let quadro = 0;
     const aoRolar = () => {
@@ -54,6 +56,35 @@ export function Animacoes() {
 const SIMBOLOS = 'ABCDEFGHJKLMNPQRSTUVWXYZ0123456789/<>#*+=';
 const embaralhar = (texto: string, certas = 0) =>
   [...texto].map((c, i) => (i < certas || c === ' ' ? c : SIMBOLOS[Math.floor(Math.random() * SIMBOLOS.length)])).join('');
+
+/**
+ * A ficha cifrada: o texto de [data-sigilo] já é cifra (não há texto certo por trás). A cada batida, 90 ms
+ * (400 ms com movimento reduzido), cerca de 1 símbolo em 8 troca; espaços, pontos e quebras de linha ficam.
+ * Só mexe no que está na tela e com a aba à vista.
+ */
+function sigilo(calmo: boolean) {
+  const alvos = [...document.querySelectorAll<HTMLElement>('.inicio [data-sigilo]')].map((el) => ({ el, letras: [...(el.textContent ?? '')] }));
+  const visiveis = new Set<Element>();
+  const vista = new IntersectionObserver((entradas) => {
+    for (const e of entradas) {
+      if (e.isIntersecting) visiveis.add(e.target);
+      else visiveis.delete(e.target);
+    }
+  });
+  alvos.forEach((a) => vista.observe(a.el));
+  const relogio = window.setInterval(() => {
+    if (document.hidden) return;
+    for (const a of alvos) {
+      if (!visiveis.has(a.el)) continue;
+      a.letras = a.letras.map((c) => (SIMBOLOS.includes(c) && Math.random() < 0.12 ? SIMBOLOS[Math.floor(Math.random() * SIMBOLOS.length)] : c));
+      a.el.textContent = a.letras.join('');
+    }
+  }, calmo ? 400 : 90);
+  return () => {
+    clearInterval(relogio);
+    vista.disconnect();
+  };
+}
 
 /** Um texto que pode se embaralhar: o nó de texto que muda e o texto certo. */
 interface Cifrado { el: HTMLElement; no: Text; final: string }
