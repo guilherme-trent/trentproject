@@ -176,9 +176,9 @@ html:has(.inicio) {
   .projetos .grade { display: grid; grid-template-columns: repeat(2, 1fr); gap: 28px; }
   .ficha { --c: 18px; position: relative; display: flex; flex-direction: column; background: var(--painel); transition: transform 0.25s var(--curva); }
   .ficha:hover { transform: translateY(-3px); }
-  .ficha .foto { position: relative; aspect-ratio: 16 / 9; overflow: hidden; background: #e9e9e5; }
-  .ficha .foto img { object-fit: cover; object-position: top; transition: transform 0.5s var(--curva); }
-  .ficha:hover .foto img { transform: scale(1.025); }
+  /* 16:10, a proporção de todas as telas: a foto aparece inteira, sem corte nem zoom */
+  .ficha .foto { position: relative; aspect-ratio: 16 / 10; overflow: hidden; background: #e9e9e5; }
+  .ficha .foto img { object-fit: cover; object-position: top; }
   .ficha .selo { position: absolute; left: 14px; top: 14px; display: flex; align-items: center; gap: 8px; padding: 6px 10px; background: var(--tinta); color: #fff; font-size: 10px; }
   .ficha .corpo { flex: 1; display: flex; flex-direction: column; padding: 24px 26px 26px; }
   .ficha .id { display: flex; justify-content: space-between; color: var(--suave); font-size: 10px; }
