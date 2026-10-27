@@ -172,6 +172,24 @@ function cifraFixa(tamanho: number, semente: number) {
   return Array.from({ length: tamanho }, () => simbolos[(s = (s * 9301 + 49297) % 233280) % simbolos.length]).join('');
 }
 
+/** Cifra em "palavras" de 3 a 8 símbolos: a linha tarjada quebra entre palavras, como um texto censurado. */
+function cifraEmPalavras(tamanho: number, semente: number) {
+  const letras = cifraFixa(tamanho, semente);
+  const palavras: string[] = [];
+  let s = semente;
+  for (let i = 0; i < letras.length; ) {
+    const n = 3 + ((s = (s * 9301 + 49297) % 233280) % 6);
+    palavras.push(letras.slice(i, i + n));
+    i += n;
+  }
+  // sobra curta no fim (1 ou 2 símbolos) se junta à palavra anterior
+  if (palavras.length > 1 && palavras[palavras.length - 1].length < 3) {
+    const sobra = palavras.pop()!;
+    palavras[palavras.length - 1] += sobra;
+  }
+  return palavras.join(' ');
+}
+
 /**
  * A ficha da Atomtech: o mesmo molde das outras, com tudo o que é do produto trocado por cifra viva
  * ([data-sigilo], que o Animacoes embaralha sem parar). O leitor de tela ouve só "conteúdo confidencial".
@@ -192,7 +210,7 @@ function FichaCifrada({ indice, total }: { indice: number; total: number }) {
         <p className="proposta">{CONFIDENCIAL.proposta}</p>
         <ol aria-label="Conteúdo confidencial">
           {CONFIDENCIAL.linhas.map((tamanho, j) => (
-            <li key={j} aria-hidden="true"><span className="mono">{n2(j)}</span><span className="tarja mono" data-sigilo>{cifraFixa(tamanho, 57 + j * 13)}</span></li>
+            <li key={j} aria-hidden="true"><span className="mono">{n2(j)}</span><span className="tarjas"><span className="tarja mono" data-sigilo>{cifraEmPalavras(tamanho, 57 + j * 13)}</span></span></li>
           ))}
         </ol>
         <div className="pe">

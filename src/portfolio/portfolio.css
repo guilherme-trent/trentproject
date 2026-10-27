@@ -224,7 +224,9 @@ html:has(.inicio) {
   .cadeado { position: relative; flex: none; width: 8px; height: 6px; margin-top: 4px; border-radius: 1px; background: currentColor; }
   .cadeado::before { content: ''; position: absolute; left: 1.5px; bottom: 5px; width: 5px; height: 5px; box-sizing: border-box; border: 1.5px solid currentColor; border-bottom: 0; border-radius: 3px 3px 0 0; }
   .ficha-cifrada h3 { letter-spacing: 0.04em; }
-  .ficha-cifrada li .tarja { justify-self: start; max-width: 100%; overflow: hidden; padding: 1px 8px; background: var(--tinta); color: rgba(255, 255, 255, 0.55); font-size: 12px; letter-spacing: 0.14em; white-space: nowrap; }
+  /* a tarja é texto em linha: sem espaço, quebra em qualquer símbolo, e cada pedaço vira uma tarja inteira (box-decoration-break) */
+  .ficha-cifrada li .tarjas { min-width: 0; line-height: 1.9; }
+  .ficha-cifrada li .tarja { padding: 2px 8px; background: var(--tinta); color: rgba(255, 255, 255, 0.55); font-size: 12px; letter-spacing: 0.14em; overflow-wrap: anywhere; -webkit-box-decoration-break: clone; box-decoration-break: clone; }
   .ficha-cifrada .restrito { display: flex; align-items: center; gap: 8px; white-space: nowrap; color: var(--suave); }
 
   /* ── Laboratório (escuro) ── */
