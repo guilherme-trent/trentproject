@@ -62,7 +62,8 @@ const embaralhar = (texto: string, certas = 0) =>
  * (400 ms com movimento reduzido), cerca de 1 símbolo em 8 troca; espaços, pontos e quebras de linha ficam.
  * Só mexe no que está na tela e com a aba à vista.
  * O painel da foto (.painel-cifra) é refeito no tamanho da foto: as linhas e colunas que cabem inteiras, sem
- * faixa vazia embaixo nem símbolo cortado no canto. Ele se refaz quando a foto muda de tamanho.
+ * faixa vazia embaixo nem símbolo cortado no canto, e com a mesma margem nos quatro lados (a sobra se divide
+ * igual, medida pela tinta dos símbolos). Ele se refaz quando a foto muda de tamanho.
  */
 function sigilo(calmo: boolean) {
   const alvos = [...document.querySelectorAll<HTMLElement>('.inicio [data-sigilo]')].map((el) => ({ el, letras: [...(el.textContent ?? '')] }));
@@ -76,10 +77,25 @@ function sigilo(calmo: boolean) {
     a.el.appendChild(regua);
     const largura = regua.getBoundingClientRect().width / 40; // um símbolo com o espaçamento entre letras
     regua.remove();
+    const espacamento = parseFloat(estilo.letterSpacing) || 0;
     const altura = parseFloat(estilo.lineHeight);
-    const colunas = Math.floor((a.el.clientWidth - parseFloat(estilo.paddingLeft) - parseFloat(estilo.paddingRight)) / largura);
-    const linhas = Math.floor((a.el.clientHeight - parseFloat(estilo.paddingTop) - parseFloat(estilo.paddingBottom)) / altura);
+    // onde a tinta do símbolo fica dentro da linha (a linha tem respiro diferente em cima e embaixo da letra)
+    const ctx = document.createElement('canvas').getContext('2d')!;
+    ctx.font = `${estilo.fontWeight} ${estilo.fontSize} ${estilo.fontFamily}`;
+    const m = ctx.measureText('M');
+    const base = (altura - m.fontBoundingBoxAscent - m.fontBoundingBoxDescent) / 2 + m.fontBoundingBoxAscent;
+    const tintaTopo = base - m.actualBoundingBoxAscent;
+    const tintaAlta = m.actualBoundingBoxAscent + m.actualBoundingBoxDescent;
+    // as colunas e as linhas que cabem inteiras com pelo menos 12 px de margem
+    const W = a.el.clientWidth;
+    const H = a.el.clientHeight;
+    const colunas = Math.floor((W - 24 + espacamento) / largura);
+    const linhas = Math.floor((H - 24 - tintaAlta) / altura) + 1;
     if (colunas < 1 || linhas < 1) return;
+    // a sobra se divide igual: mesma margem dos dois lados e em cima e embaixo
+    const larguraTinta = colunas * largura - espacamento; // o último símbolo não tem espaçamento depois
+    const alturaTinta = (linhas - 1) * altura + tintaAlta;
+    a.el.style.padding = `${(H - alturaTinta) / 2 - tintaTopo}px 0 0 ${(W - larguraTinta) / 2}px`;
     a.letras = [...Array.from({ length: linhas }, () => Array.from({ length: colunas }, sorteado).join('')).join('\n')];
     a.el.textContent = a.letras.join('');
   };

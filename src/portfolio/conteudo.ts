@@ -169,9 +169,9 @@ export const PROJETOS: Projeto[] = [
     stack: 'Python · Pyodide · JavaScript',
     imagem: { src: '/portfolio/duelo.webp', alt: 'O Duelo AFK no navegador: o terminal de combate narra o duelo, com a vida dos dois duelistas embaixo', legenda: 'Combate' },
     galeria: [
-      { src: '/portfolio/duelo/02.webp', alt: 'Menu do Duelo AFK: contra o computador, a dois, demonstração, como jogar e ranking', legenda: 'Menu' },
-      { src: '/portfolio/duelo/03.webp', alt: 'Escolha entre as 9 armas, cada uma com o seu dano e o seu efeito', legenda: '9 armas' },
-      { src: '/portfolio/duelo/04.webp', alt: 'A loja entre os duelos: forja, armadura, runas, poções e bomba de fumaça', legenda: 'Loja' },
+      { src: '/portfolio/duelo/menu.webp', alt: 'Menu do Duelo AFK: contra o computador, a dois, demonstração, como jogar e ranking', legenda: 'Menu' },
+      { src: '/portfolio/duelo/armas.webp', alt: 'Escolha entre as 9 armas, cada uma com o seu dano e o seu efeito', legenda: '9 armas' },
+      { src: '/portfolio/duelo/loja.webp', alt: 'A loja entre os duelos: forja, armadura, runas, poções e bomba de fumaça', legenda: 'Loja' },
     ],
     // Quando a V3 for publicada, entra o botão "Jogar" (o jogo abre dentro do site, em /duelo).
     links: [{ rotulo: 'Código', href: 'https://github.com/guilherme-trent/Game-PVP' }],
