@@ -153,8 +153,9 @@ html:has(.inicio) {
 
   /* ── Letreiro: a faixa preta fina que corre ── */
   .letreiro { overflow: hidden; background: var(--tinta); color: rgba(255, 255, 255, 0.82); }
-  .letreiro-trilho { display: flex; gap: 44px; width: max-content; padding: 15px 0 14px; animation: correr 70s linear infinite; }
-  .letreiro-trilho > span { display: flex; align-items: center; gap: 12px; white-space: nowrap; }
+  .letreiro-trilho { display: flex; width: max-content; padding: 15px 0 14px; animation: correr 70s linear infinite; }
+  /* o espaço vai em cada item (e não no gap do trilho): assim cada cópia termina com o próprio espaço e as quatro têm larguras iguais */
+  .letreiro-trilho > span { display: flex; align-items: center; gap: 12px; padding-right: 44px; white-space: nowrap; }
 
   /* ── Cabeçalho das seções ── */
   .cabecalho-secao { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; margin-bottom: 40px; padding-bottom: 18px; border-bottom: 1px solid var(--fio); }
@@ -298,7 +299,7 @@ html.rolou .inicio .cabecalho { border-bottom-color: var(--fio); background: rgb
 
 @keyframes subir { from { opacity: 0; transform: translateY(16px); } }
 @keyframes balanco { 0%, 100% { transform: rotate(-0.6deg); } 50% { transform: rotate(0.6deg); } }
-@keyframes correr { to { transform: translateX(-50%); } }
+@keyframes correr { to { transform: translateX(-25%); } } /* uma cópia das quatro do letreiro */
 @keyframes piscar { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
 @keyframes previa-entra { from { opacity: 0; transform: translateY(12px); } }
 

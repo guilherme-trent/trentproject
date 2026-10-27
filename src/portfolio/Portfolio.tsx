@@ -287,8 +287,9 @@ function Contato() {
 /** A faixa preta fina entre os pilares e os projetos: as áreas correndo devagar, como um letreiro de sistema. */
 function Letreiro() {
   const itens = ['Engenharia', 'Produto', 'Gestão', 'Full Stack', 'Cloud & AI', 'GovTech & EdTech', 'Brasília, DF', 'Remoto · híbrido · presencial'];
-  // duas cópias seguidas: a animação anda metade do trilho e recomeça sem emenda
-  const trilho = [...itens, ...itens];
+  // Quatro cópias seguidas, e a animação anda exatamente uma (25% do trilho) antes de recomeçar: o recomeço
+  // cai no mesmo desenho, então não se vê a emenda. Com quatro, sobram três cópias cobrindo a tela, mesmo larga.
+  const trilho = [...itens, ...itens, ...itens, ...itens];
   return (
     <div className="letreiro mono" aria-hidden="true">
       <div className="letreiro-trilho">
