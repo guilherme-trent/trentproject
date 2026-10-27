@@ -16,11 +16,11 @@ export const PESSOA = {
   curriculo: '/curriculo-guilherme-trent.pdf',
 };
 
-export const NUMEROS = [
-  { valor: '5 mil+', rotulo: 'alunos no Gamifica em 2026' },
-  { valor: '15 mil+', rotulo: 'atendimentos na plataforma que eu criei' },
-  { valor: '50+', rotulo: 'profissionais contratados para o projeto' },
-  { valor: '53', rotulo: 'testes automatizados no sistema do Gamifica' },
+/** O que eu faço, em três frentes. Sem números: a página não envelhece nem depende de um projeto só. */
+export const PILARES = [
+  { titulo: 'Código', texto: 'Sites, plataformas e aplicativos, do zero à produção.' },
+  { titulo: 'Produto', texto: 'Visão de produto e arquitetura para resolver o problema certo.' },
+  { titulo: 'Equipe', texto: 'Contratação, capacitação e operação, no prazo e com a equipe alinhada.' },
 ];
 
 export interface Link {
@@ -163,12 +163,6 @@ export const FORMACAO = [
   { curso: 'Pós em Arquitetura e Projetos de Cloud Computing', onde: 'Gran Faculdade', quando: 'em andamento' },
   { curso: 'Pós em Governança de TI', onde: 'Gran Faculdade', quando: 'em andamento' },
   { curso: 'Google Project Management', onde: 'Coursera', quando: 'em andamento' },
-];
-
-/** A faixa que corre antes do contato. */
-export const COMPETENCIAS = [
-  'Arquitetura de software', 'Desempenho', 'Experiência do usuário', 'Produto', 'IA aplicada',
-  'Dados e LGPD', 'Gestão de equipes', 'Tempo real', 'Shaders e 3D', 'Do zero à produção',
 ];
 
 export const FERRAMENTAS = [

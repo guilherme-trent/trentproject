@@ -1,1040 +1,293 @@
 /*
- * O portfólio (página principal). Mesma identidade da experiência 3D: o verde da nebulosa,
- * a serifa da Yggdrasil e o mono do terminal.
+ * O portfólio (página principal), na linguagem da capa do LinkedIn: fundo branco, tinta, verde Loki nos
+ * detalhes, Archivo condensada nos títulos e Geist Mono nos rótulos de "sistema".
  *
- * Movimento em três camadas:
- *  1. a entrada (logo ao abrir): o cargo se decodifica, as letras do nome sobem, a árvore acende;
- *  2. ao rolar: cada bloco entra em cena quando aparece ([data-revelar] + a classe .revelado, posta pelo Animacoes.tsx);
- *  3. o tempo todo: faíscas ao fundo, o vídeo da árvore, brilhos que seguem o ponteiro.
- * Quem pede menos movimento no sistema vê tudo pronto e parado (nada aqui depende de animar para aparecer).
+ * Tudo mora dentro de .inicio: o Next mantém o CSS de uma página carregado ao navegar para outra, e
+ * nada daqui pode vazar para a experiência 3D ou para a cidade (nem o contrário).
+ *
+ * Movimento em duas camadas:
+ *  1. a entrada (logo ao abrir): os blocos do topo sobem um depois do outro ([class~=entra] + --atraso);
+ *  2. ao rolar: cada bloco entra em cena quando aparece ([data-revelar] + .revelado, posta pelo Animacoes).
+ * Sem JavaScript, ou com movimento reduzido, tudo aparece pronto e parado.
  */
 
-.portfolio {
-  --fundo: #030605;
-  --superficie: rgba(167, 243, 208, 0.035);
-  --borda: rgba(167, 243, 208, 0.12);
-  --borda-forte: rgba(167, 243, 208, 0.28);
-  --texto: #e8f1ec;
-  --texto-suave: rgba(232, 241, 236, 0.66);
-  --texto-fraco: rgba(232, 241, 236, 0.42);
-  --verde: #6ee7b7;
-  --verde-claro: #a7f3d0;
-  --suave: cubic-bezier(0.2, 0.7, 0.2, 1);
+html:has(.inicio) {
+  background: #fff; /* o "elástico" da rolagem no celular mostra branco, e não o preto do resto do site */
+}
 
-  background: var(--fundo);
-  color: var(--texto);
-  font-family: var(--font-geist-sans), system-ui, sans-serif;
+.inicio {
+  --verde: #1fa35c;       /* formas, LEDs, detalhes */
+  --verde-texto: #13804a; /* texto verde sobre branco: contraste 4,9:1 (o --verde dá só 3:1) */
+  --tinta: #0c0c0e;
+  --fundo: #fff;
+  --painel: #f5f5f2;
+  --suave: #62626b;
+  --suave-escuro: #9c9ca5;
+  --fio: rgba(12, 12, 14, 0.12);
+  --fio-forte: rgba(12, 12, 14, 0.28);
+  --margem: clamp(16px, 4vw, 56px);
+  --curva: cubic-bezier(0.2, 0.7, 0.2, 1);
+
+  min-height: 100dvh;
   overflow-x: clip;
-  background-image:
-    radial-gradient(60rem 40rem at 78% -10%, rgba(16, 185, 129, 0.16), transparent 70%),
-    radial-gradient(50rem 36rem at -10% 35%, rgba(20, 83, 45, 0.22), transparent 70%);
-  background-attachment: fixed;
-}
-.portfolio main,
-.portfolio footer {
-  position: relative;
-  z-index: 1;
-}
-.portfolio ::selection {
-  background: rgba(110, 231, 183, 0.3);
-}
-.portfolio a:focus-visible,
-.portfolio button:focus-visible {
-  outline: 1px solid var(--verde-claro);
-  outline-offset: 3px;
-}
+  background: var(--fundo);
+  color: var(--tinta);
+  font-family: var(--font-archivo), system-ui, sans-serif;
+  font-size: 16px;
+  line-height: 1.55;
 
-/* ── Fundo vivo e barra de progresso ─────────────────────────────────────── */
-.faiscas {
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-}
-.barra-progresso {
-  position: fixed;
-  inset: 0 0 auto 0;
-  z-index: 30;
-  height: 2px;
-  transform: scaleX(var(--progresso, 0));
-  transform-origin: left;
-  background: linear-gradient(90deg, rgba(110, 231, 183, 0.2), var(--verde), #f0fdf7);
-  box-shadow: 0 0 12px rgba(110, 231, 183, 0.7);
-  pointer-events: none;
-}
+  & ::selection { background: rgba(31, 163, 92, 0.25); }
+  & a:focus-visible, & button:focus-visible { outline: 2px solid var(--verde); outline-offset: 3px; }
+  & img { display: block; }
 
-/* ── Cabeçalho: transparente no topo, sólido depois de rolar ─────────────── */
-.cabecalho {
-  border-bottom: 1px solid transparent;
-  transition: background-color 0.4s, border-color 0.4s, backdrop-filter 0.4s;
-}
-html.rolou .cabecalho {
-  background: rgba(3, 6, 5, 0.78);
-  border-color: var(--borda);
-  backdrop-filter: blur(12px);
-}
-.link-linha {
-  position: relative;
-  transition: color 0.25s;
-}
-.link-linha::after {
-  content: '';
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: -4px;
-  height: 1px;
-  background: currentColor;
-  transform: scaleX(0);
-  transform-origin: right;
-  transition: transform 0.35s var(--suave);
-}
-.link-linha:hover {
-  color: #fff;
-}
-.link-linha:hover::after {
-  transform: scaleX(1);
-  transform-origin: left;
-}
+  /* ── Peças de base ── */
+  .condensada { font-family: var(--font-archivo), sans-serif; font-stretch: 68%; font-weight: 850; text-transform: uppercase; line-height: 0.92; letter-spacing: 0.002em; }
+  .mono { font-family: var(--font-geist-mono), ui-monospace, monospace; font-weight: 500; letter-spacing: 0.22em; text-transform: uppercase; font-size: 11px; line-height: 1.6; }
+  .chanfro { clip-path: polygon(0 0, calc(100% - var(--c, 16px)) 0, 100% var(--c, 16px), 100% 100%, var(--c, 16px) 100%, 0 calc(100% - var(--c, 16px))); }
+  .listras { background-image: repeating-linear-gradient(-45deg, rgba(12, 12, 14, 0.035) 0 2px, transparent 2px 22px); }
+  .q { display: inline-block; flex: none; width: 8px; height: 8px; background: var(--verde); }
+  .led { display: inline-block; flex: none; width: 6px; height: 6px; border-radius: 50%; background: var(--verde); box-shadow: 0 0 8px var(--verde); animation: piscar 1.8s ease-in-out infinite; }
+  .barras { display: flex; gap: 2px; align-items: flex-end; color: var(--tinta); }
+  .barras i { display: block; background: currentColor; }
+  .barras.claras { color: #fff; opacity: 0.8; }
+  .regua { display: flex; align-items: flex-start; }
+  .regua i { display: block; flex: none; width: 1px; background: currentColor; }
+  .secao { padding: 96px var(--margem); scroll-margin-top: 48px; }
 
-/* ── Rótulo de seção: o "Y G G D R A S I L" do diálogo da árvore ─────────── */
-.rotulo-secao {
-  display: flex;
-  align-items: center;
-  gap: 0.9rem;
-  font-family: var(--font-geist-mono), ui-monospace, monospace;
-  font-size: 0.72rem;
-  letter-spacing: 0.32em;
-  text-transform: uppercase;
-  color: var(--verde-claro);
-}
-.rotulo-secao span {
-  opacity: 0.85;
-}
-.rotulo-secao::after {
-  content: '';
-  flex: 1;
-  height: 1px;
-  background: linear-gradient(90deg, var(--borda-forte), transparent);
-  transform-origin: left;
-}
+  /* aba em pé: a assinatura */
+  .aba {
+    position: fixed; z-index: 30; inset: 0 0 0 auto; width: 40px;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--tinta); color: var(--verde);
+    clip-path: polygon(0 20px, 20px 0, 100% 0, 100% 100%, 0 100%);
+  }
+  .aba span { writing-mode: vertical-rl; letter-spacing: 0.32em; }
+  .miolo { margin-right: 40px; }
 
-/* ── Botões: um brilho atravessa ao passar o mouse; a seta avança ───────── */
-.botao {
-  position: relative;
-  overflow: hidden;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  min-height: 2.75rem;
-  padding: 0 1.15rem;
-  border: 1px solid var(--borda-forte);
-  font-family: var(--font-geist-mono), ui-monospace, monospace;
-  font-size: 0.78rem;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--texto);
-  transition: border-color 0.25s, background-color 0.25s, box-shadow 0.35s;
-}
-.botao::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(105deg, transparent 35%, rgba(240, 253, 247, 0.22) 50%, transparent 65%);
-  transform: translateX(-120%);
-  transition: transform 0.7s var(--suave);
-  pointer-events: none;
-}
-.botao:hover {
-  border-color: var(--verde-claro);
-  background: rgba(167, 243, 208, 0.06);
-  box-shadow: 0 0 24px -6px rgba(110, 231, 183, 0.5);
-}
-.botao:hover::after {
-  transform: translateX(120%);
-}
-.botao .seta {
-  display: inline-block;
-  transition: transform 0.3s var(--suave);
-}
-.botao:hover .seta {
-  transform: translate(3px, -3px);
-}
-.botao-principal {
-  border-color: var(--verde);
-  background: rgba(110, 231, 183, 0.12);
-  color: #f0fdf7;
-}
-.botao-principal:hover {
-  background: rgba(110, 231, 183, 0.2);
-}
+  /* ── Botões ── */
+  .botao {
+    --c: 12px;
+    display: inline-flex; align-items: center; gap: 12px; padding: 15px 22px 14px;
+    border: 0; cursor: pointer; background: var(--tinta); color: #fff;
+    transition: background-color 0.2s, color 0.2s, box-shadow 0.2s;
+  }
+  .botao:hover { background: var(--verde); color: var(--tinta); }
+  .botao.vazado { clip-path: none; background: transparent; color: var(--tinta); box-shadow: inset 0 0 0 1px var(--tinta); }
+  .botao.vazado:hover { background: var(--tinta); color: #fff; }
+  .seta { display: inline-block; transition: transform 0.2s var(--curva); }
+  .botao:hover .seta { transform: translateX(4px); }
 
-/* ── Prévia do currículo (janela nativa <dialog>, aberta pelo PreviaCurriculo) ─ */
-html:has(.previa-curriculo[open]) {
+  /* ── Cabeçalho ── */
+  .cabecalho { position: sticky; top: 0; z-index: 20; border-bottom: 1px solid transparent; background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(10px); transition: border-color 0.3s, background-color 0.3s; }
+  .cabecalho-linha { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 14px var(--margem); }
+  .marca { display: flex; align-items: center; gap: 10px; }
+  .cabecalho-links { display: flex; gap: 28px; }
+  .cabecalho-links a { color: var(--suave); transition: color 0.2s; }
+  .cabecalho-links a:hover { color: var(--tinta); }
+  .estado { display: flex; align-items: center; gap: 10px; color: var(--verde-texto); }
+
+  /* ── Topo ── */
+  .topo {
+    position: relative; overflow: hidden;
+    display: grid; grid-template-columns: 1.05fr 1fr; gap: 48px; align-items: center;
+    min-height: min(760px, calc(100svh - 50px));
+    padding: 72px var(--margem) 96px;
+  }
+  .corte { position: absolute; width: 14px; height: 14px; border: 0 solid var(--fio-forte); }
+  .corte.ce { left: 20px; top: 20px; border-width: 1px 0 0 1px; }
+  .corte.cd { right: 20px; top: 20px; border-width: 1px 1px 0 0; }
+  .corte.be { left: 20px; bottom: 20px; border-width: 0 0 1px 1px; }
+  .corte.bd { right: 20px; bottom: 20px; border-width: 0 1px 1px 0; }
+
+  .apresenta .id { display: flex; align-items: center; gap: 10px; }
+  .apresenta h1 { margin-top: 18px; font-size: clamp(48px, 6.4vw, 92px); }
+  .frase { margin-top: 22px; max-width: 520px; font-size: 18px; color: #2a2a30; }
+  .onde { margin-top: 14px; color: var(--suave); }
+  .acoes { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-top: 32px; }
+  .redes { display: flex; gap: 20px; margin-left: 8px; color: var(--suave); }
+  .redes a:hover { color: var(--verde-texto); }
+  .detalhes { display: flex; gap: 40px; align-items: flex-end; margin-top: 48px; }
+  .detalhes .rot { margin-top: 10px; color: var(--suave); font-size: 9px; }
+  .leds { display: grid; grid-template-columns: repeat(10, 5px); gap: 7px; }
+  .leds i { width: 5px; height: 5px; background: rgba(12, 12, 14, 0.12); transition: background-color 0.4s; }
+  .leds i.aceso { background: var(--verde); }
+
+  /* a etiqueta pendurada */
+  .pendurada { position: relative; align-self: stretch; display: flex; align-items: center; justify-content: center; }
+  .cordao { position: absolute; top: -72px; left: calc(50% - 250px + 40px); width: 1px; height: calc(50% - 30px); background: var(--tinta); }
+  .sombra { filter: drop-shadow(0 18px 30px rgba(12, 12, 14, 0.16)); transform-origin: 40px -60px; animation: balanco 7s ease-in-out infinite; }
+  .etiqueta { --c: 20px; display: flex; width: 500px; min-height: 200px; background: var(--tinta); color: #fff; }
+  .canhoto { display: flex; flex-direction: column; align-items: center; width: 80px; padding: 20px 0; border-right: 1px dashed rgba(255, 255, 255, 0.22); }
+  .furo { width: 16px; height: 16px; border-radius: 50%; background: var(--verde); box-shadow: inset 0 0 0 3px var(--tinta); }
+  .canhoto .n { margin-top: auto; writing-mode: vertical-rl; transform: rotate(180deg); color: var(--suave-escuro); font-size: 10px; }
+  .etiqueta .corpo { flex: 1; display: flex; flex-direction: column; padding: 22px 24px; }
+  .etiqueta .cab { display: flex; justify-content: space-between; color: var(--suave-escuro); font-size: 10px; }
+  .etiqueta .on { display: flex; align-items: center; gap: 8px; color: var(--verde); }
+  .etiqueta .cargo { margin-top: 2px; font-size: 30px; white-space: nowrap; }
+  .etiqueta .cab + .cargo { margin-top: 18px; }
+  .etiqueta .cargo + .cargo { color: var(--verde); }
+  .etiqueta .pe { display: flex; justify-content: space-between; align-items: flex-end; margin-top: auto; padding-top: 20px; color: var(--suave-escuro); font-size: 10px; }
+
+  .regua-topo { position: absolute; left: var(--margem); bottom: 30px; color: var(--tinta); opacity: 0.35; }
+
+  /* a árvore, num cantinho */
+  .portal { position: absolute; right: var(--margem); bottom: 28px; display: flex; align-items: center; gap: 14px; padding: 8px 14px 8px 8px; background: var(--fundo); box-shadow: inset 0 0 0 1px var(--fio); transition: box-shadow 0.2s; }
+  .portal:hover { box-shadow: inset 0 0 0 1px var(--tinta); }
+  .portal img { --c: 8px; width: 56px; height: 56px; object-fit: cover; }
+  .portal .t { font-size: 10px; color: var(--suave); }
+  .portal .t b { display: block; color: var(--tinta); font-weight: 500; }
+  .portal .seta { color: var(--verde-texto); }
+  .portal:hover .seta { transform: translateX(4px); }
+
+  /* ── Cabeçalho das seções ── */
+  .cabecalho-secao { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; margin-bottom: 40px; padding-bottom: 18px; border-bottom: 1px solid var(--fio); }
+  .cabecalho-secao .num { color: var(--verde-texto); }
+  .cabecalho-secao h2 { margin-top: 10px; font-size: clamp(34px, 3.6vw, 48px); }
+  .cabecalho-secao .lado { color: var(--suave); text-align: right; }
+
+  /* ── Pilares ── */
+  .pilares { padding-top: 0; }
+  .pilares .grade { display: grid; grid-template-columns: repeat(3, 1fr); border-block: 1px solid var(--fio); }
+  .pilares .grade > div { padding: 28px 28px 30px 0; }
+  .pilares .grade > div + div { padding-left: 28px; border-left: 1px solid var(--fio); }
+  .pilares .n { color: var(--verde-texto); }
+  .pilares h2 { margin-top: 10px; font-size: 30px; }
+  .pilares p { margin-top: 8px; max-width: 320px; color: var(--suave); }
+
+  /* ── Projetos como fichas ── */
+  .projetos .grade { display: grid; grid-template-columns: repeat(2, 1fr); gap: 28px; }
+  .ficha { --c: 18px; position: relative; display: flex; flex-direction: column; background: var(--painel); transition: transform 0.25s var(--curva); }
+  .ficha:hover { transform: translateY(-3px); }
+  .ficha .foto { position: relative; aspect-ratio: 16 / 9; overflow: hidden; background: #e9e9e5; }
+  .ficha .foto img { object-fit: cover; object-position: top; transition: transform 0.5s var(--curva); }
+  .ficha:hover .foto img { transform: scale(1.025); }
+  .ficha .selo { position: absolute; left: 14px; top: 14px; display: flex; align-items: center; gap: 8px; padding: 6px 10px; background: var(--tinta); color: #fff; font-size: 10px; }
+  .ficha .corpo { flex: 1; display: flex; flex-direction: column; padding: 24px 26px 26px; }
+  .ficha .id { display: flex; justify-content: space-between; color: var(--suave); font-size: 10px; }
+  .ficha h3 { margin-top: 12px; font-size: 30px; }
+  .ficha .proposta { margin-top: 10px; font-size: 17px; color: #2a2a30; }
+  .ficha ol { display: grid; gap: 8px; margin-top: 18px; list-style: none; }
+  .ficha li { display: grid; grid-template-columns: 34px 1fr; font-size: 15px; color: #3a3a42; }
+  .ficha li .mono { padding-top: 2px; color: var(--verde-texto); }
+  .ficha li b { font-weight: 600; color: var(--tinta); }
+  .ficha .pe { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-top: auto; padding-top: 22px; border-top: 1px solid var(--fio); }
+  .ficha ol + .pe { margin-top: 22px; }
+  .ficha .stack { color: var(--suave); font-size: 10px; letter-spacing: 0.16em; }
+  .ficha .links { display: flex; gap: 18px; }
+  .ficha .link { white-space: nowrap; transition: color 0.2s; }
+  .ficha .link:hover { color: var(--verde-texto); }
+
+  /* ── Laboratório (escuro) ── */
+  .lab { position: relative; overflow: hidden; background: var(--tinta); color: #fff; }
+  .lab .listras-claras { position: absolute; inset: 0; pointer-events: none; background-image: repeating-linear-gradient(-45deg, rgba(255, 255, 255, 0.025) 0 2px, transparent 2px 22px); }
+  .lab .corte-verde { position: absolute; top: 0; bottom: 0; right: 40%; width: 150px; background: var(--verde); opacity: 0.9; clip-path: polygon(96px 0, 150px 0, 54px 100%, 0 100%); }
+  .lab .cabecalho-secao { position: relative; border-bottom-color: rgba(255, 255, 255, 0.14); }
+  .lab .cabecalho-secao .num { color: var(--verde); }
+  .lab .cabecalho-secao .lado { color: var(--suave-escuro); }
+  .lab .grade { position: relative; display: grid; grid-template-columns: 1.3fr 1fr; gap: 28px; }
+  .experimento { --c: 18px; position: relative; z-index: 1; display: block; min-height: 440px; overflow: hidden; background: #16161a; } /* altura mínima, e não proporção: os dois cards ficam da mesma altura e o texto nunca cobre a imagem toda */
+  .experimento img { object-fit: cover; opacity: 0.88; transition: transform 0.6s var(--curva), opacity 0.3s; }
+  .experimento:hover img { transform: scale(1.03); opacity: 1; }
+  .experimento .info { position: absolute; inset: auto 0 0 0; display: flex; flex-direction: column; padding: 60px 24px 22px; background: linear-gradient(0deg, rgba(12, 12, 14, 0.95), rgba(12, 12, 14, 0)); }
+  .experimento .info .mono { color: var(--verde); font-size: 10px; }
+  .experimento .nome { margin-top: 8px; font-size: 32px; }
+  .experimento .texto { margin-top: 6px; max-width: 460px; font-size: 15px; color: #c9c9cf; }
+  .experimento .entrar { position: absolute; right: 20px; top: 20px; display: flex; gap: 8px; align-items: center; padding: 8px 12px; background: var(--verde); color: var(--tinta); font-size: 10px; }
+
+  /* ── Experiência ── */
+  .exp ol { list-style: none; }
+  .exp .linha { display: grid; grid-template-columns: 200px 1fr 1.2fr; gap: 32px; align-items: baseline; padding: 24px 0; border-bottom: 1px solid var(--fio); }
+  .exp .quando { color: var(--suave); }
+  .exp h3 { font-size: 26px; }
+  .exp .onde { margin-top: 6px; font-size: 14px; color: var(--suave); }
+  .exp .linha > p { font-size: 15px; color: #3a3a42; }
+  .curiosidade { --c: 12px; display: flex; gap: 16px; align-items: flex-start; margin-top: 32px; padding: 18px 20px; background: var(--painel); }
+  .curiosidade .mono { padding-top: 2px; white-space: nowrap; color: var(--verde-texto); }
+
+  /* ── Formação e ferramentas ── */
+  .duas { display: grid; grid-template-columns: 1fr 1fr; gap: 56px; padding-top: 0; }
+  .formacao { list-style: none; }
+  .formacao li { display: grid; grid-template-columns: 1fr auto; gap: 16px; padding: 16px 0; border-bottom: 1px solid var(--fio); }
+  .formacao b { display: block; font-weight: 600; }
+  .formacao b + span { font-size: 14px; color: var(--suave); }
+  .formacao .mono { align-self: center; color: var(--suave); }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; list-style: none; }
+  .chips li { padding: 8px 12px; box-shadow: inset 0 0 0 1px var(--fio-forte); font-size: 10px; letter-spacing: 0.16em; }
+
+  /* ── Contato e rodapé ── */
+  .contato { display: grid; grid-template-columns: 1fr auto; gap: 40px; align-items: end; background: var(--tinta); color: #fff; }
+  .contato .num { color: var(--verde); }
+  .contato h2 { margin-top: 12px; font-size: clamp(40px, 5vw, 72px); }
+  .email { display: inline-flex; gap: 12px; align-items: center; margin-top: 22px; padding-bottom: 6px; border-bottom: 1px solid var(--verde); font-family: var(--font-geist-mono), monospace; font-size: clamp(15px, 1.6vw, 20px); letter-spacing: 0.06em; transition: color 0.2s; }
+  .email:hover { color: var(--verde); }
+  .contato .links { display: flex; flex-direction: column; gap: 12px; text-align: right; color: var(--suave-escuro); }
+  .contato .links a:hover { color: var(--verde); }
+  .rodape { display: flex; justify-content: space-between; gap: 16px; padding: 18px var(--margem); border-top: 1px solid rgba(255, 255, 255, 0.1); background: var(--tinta); color: var(--suave-escuro); }
+  .rodape a { color: #fff; }
+  .rodape a:hover { color: var(--verde); }
+
+  /* ── Prévia do currículo (janela nativa <dialog>, aberta pelo PreviaCurriculo) ── */
+  .previa-curriculo { width: min(900px, 100vw - 32px); max-width: none; max-height: calc(100dvh - 32px); margin: auto; padding: 0; border: 0; background: var(--painel); color: var(--tinta); overflow: auto; overscroll-behavior: contain; }
+  .previa-curriculo::backdrop { background: rgba(12, 12, 14, 0.72); backdrop-filter: blur(4px); }
+  .previa-barra { position: sticky; top: 0; z-index: 1; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--fio); background: rgba(245, 245, 242, 0.94); backdrop-filter: blur(8px); }
+  .previa-barra .botao { padding: 11px 16px 10px; }
+  .previa-folhas { display: grid; gap: 16px; padding: 16px; }
+  .previa-folha { width: 100%; height: auto; box-shadow: 0 10px 30px rgba(12, 12, 14, 0.12); }
+  .previa-curriculo[open] .previa-folhas { animation: previa-entra 0.35s var(--curva); }
+}
+html:has(.inicio .previa-curriculo[open]) {
   overflow: hidden; /* a página atrás não rola enquanto a prévia está aberta */
 }
-.previa-curriculo {
-  width: min(900px, 100vw);
-  max-width: 100vw;
-  height: 100dvh;
-  max-height: 100dvh;
-  margin: 0 auto;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: var(--texto);
-  overflow: hidden;
-}
-.previa-curriculo[open] {
-  display: flex;
-  flex-direction: column;
-}
-.previa-curriculo::backdrop {
-  background: rgba(3, 6, 5, 0.86);
-  backdrop-filter: blur(6px);
-}
-.previa-barra {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-  padding: 0.9rem 1rem;
-  border-bottom: 1px solid var(--borda);
-  background: var(--fundo);
-}
-.previa-folhas {
-  flex: 1;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  display: flex;
-  flex-direction: column;
-  gap: 1.25rem;
-  padding: 1.25rem 1rem 2.5rem;
-}
-.previa-folha {
-  width: 100%;
-  height: auto;
-  background: #fff;
-  box-shadow: 0 20px 60px -20px rgba(0, 0, 0, 0.8), 0 0 0 1px var(--borda);
-}
+html.rolou .inicio .cabecalho { border-bottom-color: var(--fio); background: rgba(255, 255, 255, 0.9); }
+
+/* ── Entradas (só com JavaScript e sem pedido de menos movimento) ── */
 @media (prefers-reduced-motion: no-preference) {
-  .previa-curriculo[open] .previa-folhas {
-    animation: previa-entra 0.35s var(--suave);
+  html.com-js .inicio {
+    .entra { animation: subir 0.8s var(--curva) both; animation-delay: var(--atraso, 0ms); }
+    [data-revelar] { opacity: 0; transform: translateY(14px); transition: opacity 0.7s var(--curva), transform 0.7s var(--curva); transition-delay: var(--atraso, 0ms); }
+    [data-revelar].revelado { opacity: 1; transform: none; }
   }
 }
-@keyframes previa-entra {
-  from { opacity: 0; transform: translateY(14px); }
-}
-
-/* ── O vídeo da árvore (capa nítida + vídeo por cima quando já pode tocar) ─ */
-.video-arvore {
-  position: absolute;
-  inset: 0;
-}
-.video-arvore img,
-.video-arvore video {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: 50% 32%;
-}
-.video-arvore video {
-  opacity: 0;
-  transition: opacity 1.2s ease;
-}
-.video-arvore video.tocando {
-  opacity: 1;
-}
-
-/* ── O topo: o mar de pontos (MarDePontos.tsx) ─────────────────────────── */
-.topo-mar {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-}
-.mar-de-pontos {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  display: block;
-}
-@media (min-width: 768px) {
-  /* no computador o mar ocupa a direita e se apaga em direção ao nome */
-  .topo-mar {
-    -webkit-mask-image: linear-gradient(90deg, transparent 6%, #000 50%);
-    mask-image: linear-gradient(90deg, transparent 6%, #000 50%);
-  }
-}
-@media (max-width: 767px) {
-  /* no celular o mar fica em cima e o texto embaixo */
-  .topo-mar {
-    -webkit-mask-image: linear-gradient(180deg, #000 40%, transparent 64%);
-    mask-image: linear-gradient(180deg, #000 40%, transparent 64%);
-  }
-}
-.letra {
-  display: inline-block;
-}
-.role-para-baixo {
-  position: absolute;
-  left: 50%;
-  bottom: 2.2rem;
-  width: 1px;
-  height: 3.2rem;
-  background: linear-gradient(180deg, transparent, var(--borda-forte));
-  overflow: hidden;
-}
-.role-para-baixo span {
-  position: absolute;
-  left: -1px;
-  width: 3px;
-  height: 0.9rem;
-  background: var(--verde-claro);
-  box-shadow: 0 0 10px var(--verde);
-}
-@media (max-width: 767px) {
-  .role-para-baixo {
-    display: none;
-  }
-}
-
-/* ── Cartões ─────────────────────────────────────────────────────────────── */
-.cartao {
-  position: relative;
-  border: 1px solid var(--borda);
-  background-color: var(--superficie);
-  transition: border-color 0.35s, box-shadow 0.45s;
-}
-.cartao:hover {
-  border-color: var(--borda-forte);
-  box-shadow: 0 24px 60px -30px rgba(16, 185, 129, 0.45);
-  /* o brilho que segue o ponteiro (--px/--py vêm do Animacoes.tsx) */
-  background-image: radial-gradient(28rem circle at var(--px, 50%) var(--py, 50%), rgba(110, 231, 183, 0.08), transparent 60%);
-}
-.cartao-imagem {
-  position: relative;
-  overflow: hidden;
-  border-bottom: 1px solid var(--borda);
-  background: #06100c;
-}
-.cartao-imagem img {
-  transition: transform 0.9s var(--suave);
-}
-.cartao:hover .cartao-imagem img {
-  transform: scale(1.04);
-}
-.losango {
-  transition: background-color 0.3s, box-shadow 0.3s;
-}
-.cartao:hover .losango {
-  background: var(--verde);
-  box-shadow: 0 0 8px var(--verde);
-}
-/* As marcas nos cantos, como nos terminais da experiência; crescem no hover */
-.cantos::before,
-.cantos::after {
-  content: '';
-  position: absolute;
-  z-index: 2;
-  width: 12px;
-  height: 12px;
-  border-color: var(--verde);
-  border-style: solid;
-  opacity: 0.75;
-  pointer-events: none;
-  transition: width 0.4s var(--suave), height 0.4s var(--suave), opacity 0.4s;
-}
-.cantos::before {
-  top: -1px;
-  left: -1px;
-  border-width: 2px 0 0 2px;
-}
-.cantos::after {
-  bottom: -1px;
-  right: -1px;
-  border-width: 0 2px 2px 0;
-}
-.cantos:hover::before,
-.cantos:hover::after {
-  width: 28px;
-  height: 28px;
-  opacity: 1;
-}
-.ficha {
-  transition: border-color 0.25s, color 0.25s, box-shadow 0.25s;
-}
-.ficha:hover {
-  border-color: var(--verde);
-  color: #fff;
-  box-shadow: 0 0 16px -4px rgba(110, 231, 183, 0.55);
-}
-
-/* ── A linha do tempo: a linha cresce, os losangos acendem ───────────────── */
-.linha-do-tempo {
-  position: relative;
-}
-.linha-do-tempo::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0.4rem;
-  bottom: 0;
-  width: 1px;
-  background: linear-gradient(180deg, var(--verde), var(--borda-forte) 60%, transparent);
-  transform-origin: top;
-}
-.linha-do-tempo li::before {
-  content: '';
-  position: absolute;
-  left: calc(-2rem - 5px);
-  top: 0.55rem;
-  width: 9px;
-  height: 9px;
-  border: 1px solid var(--verde);
-  background: var(--fundo);
-  transform: rotate(45deg);
-  transition: transform 0.5s var(--suave) 0.25s, background-color 0.5s 0.25s, box-shadow 0.5s 0.25s;
-}
-.linha-do-tempo li.revelado::before {
-  background: var(--verde);
-  box-shadow: 0 0 12px var(--verde);
-}
-
-/* ── Contato: uma borda de luz girando e o título com brilho ─────────────── */
-@property --angulo {
-  syntax: '<angle>';
-  inherits: false;
-  initial-value: 0deg;
-}
-.contato {
-  border: 1px solid transparent;
-  background:
-    linear-gradient(#060b09, #060b09) padding-box,
-    conic-gradient(from var(--angulo), var(--borda) 0deg, var(--verde) 40deg, var(--borda) 90deg, var(--borda) 360deg) border-box;
-}
-.titulo-contato {
-  background: linear-gradient(100deg, var(--texto) 30%, #ffffff 45%, var(--verde-claro) 50%, var(--texto) 65%) 0 0 / 250% 100%;
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
-.email {
-  background: linear-gradient(currentColor, currentColor) 0 100% / 0 1px no-repeat;
-  padding-bottom: 4px;
-  transition: background-size 0.45s var(--suave);
-}
-.email:hover {
-  background-size: 100% 1px;
-}
-
-/* ══ MOVIMENTO (só para quem não pediu menos movimento) ════════════════════ */
-@media (prefers-reduced-motion: no-preference) {
-  /* 1. A entrada, logo ao abrir */
-  .cabecalho {
-    animation: descer 0.9s var(--suave) both 0.1s;
-  }
-  .entra {
-    animation: entrar 1s var(--suave) both;
-    animation-delay: var(--atraso, 0ms);
-  }
-  .letra {
-    animation: letra 1.1s var(--suave) both;
-    animation-delay: var(--atraso, 0ms);
-    transform-origin: 50% 100%;
-  }
-  .mar-de-pontos {
-    animation: mar-surgir 2.4s cubic-bezier(0.16, 1, 0.3, 1) both 0.2s;
-  }
-  @keyframes mar-surgir {
-    from { opacity: 0; transform: translateY(6vh); }
-    to { opacity: 1; transform: none; }
-  }
-  .topo::after {
-    /* um feixe de luz cruza a tela uma vez, como a ignição da experiência */
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(100deg, transparent 40%, rgba(167, 243, 208, 0.1) 50%, transparent 60%);
-    transform: translateX(-100%);
-    animation: feixe 2.4s ease-out 0.6s both;
-    pointer-events: none;
-  }
-
-  @keyframes descer {
-    from { transform: translateY(-100%); opacity: 0; }
-  }
-  @keyframes entrar {
-    from { opacity: 0; transform: translateY(18px); filter: blur(6px); }
-  }
-  @keyframes letra {
-    from { opacity: 0; transform: translateY(0.45em) rotate(4deg); filter: blur(14px); }
-    60% { filter: blur(0); }
-  }
-  @keyframes feixe {
-    to { transform: translateX(100%); }
-  }
-
-  /* 2. Ao rolar: o estado "antes de entrar" só vale com JavaScript (sem ele, tudo aparece) */
-  html.com-js [data-revelar] {
-    transition:
-      opacity 0.9s var(--suave),
-      transform 1.1s var(--suave),
-      clip-path 1.3s cubic-bezier(0.7, 0, 0.2, 1),
-      filter 0.9s var(--suave);
-    transition-delay: var(--atraso, 0ms);
-  }
-  html.com-js [data-revelar='subir']:not(.revelado) {
-    opacity: 0;
-    transform: translateY(48px);
-  }
-  html.com-js [data-revelar='lado']:not(.revelado) {
-    opacity: 0;
-    transform: translateX(-28px);
-    filter: blur(4px);
-  }
-  html.com-js [data-revelar='estalo']:not(.revelado) {
-    opacity: 0;
-    transform: scale(0.6) translateY(10px);
-  }
-  html.com-js [data-revelar='estalo'] {
-    transition-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1);
-  }
-  html.com-js [data-revelar='cortina']:not(.revelado) {
-    clip-path: inset(0 0 100% 0);
-  }
-  html.com-js [data-revelar='cortina'] img,
-  html.com-js [data-revelar='cortina'] .video-arvore {
-    transition: transform 1.6s var(--suave);
-    transition-delay: var(--atraso, 0ms);
-  }
-  html.com-js [data-revelar='cortina']:not(.revelado) img,
-  html.com-js [data-revelar='cortina']:not(.revelado) .video-arvore {
-    transform: scale(1.18);
-  }
-  html.com-js [data-revelar='linha']::after {
-    transition: transform 1.4s var(--suave) 0.15s;
-  }
-  html.com-js [data-revelar='linha']:not(.revelado)::after {
-    transform: scaleX(0);
-  }
-  html.com-js [data-revelar='linha'] span {
-    display: inline-block;
-    transition: letter-spacing 1.2s var(--suave), opacity 1s;
-  }
-  html.com-js [data-revelar='linha']:not(.revelado) span {
-    letter-spacing: 0.7em;
-    opacity: 0;
-  }
-  html.com-js .linha-do-tempo::before {
-    transition: transform 2.4s var(--suave);
-  }
-  html.com-js .linha-do-tempo:not(.revelado)::before {
-    transform: scaleY(0);
-  }
-  html.com-js .linha-do-tempo li:not(.revelado)::before {
-    transform: rotate(45deg) scale(0);
-  }
-
-  /* Segurança: se o JavaScript não acordar, tudo aparece sozinho depois de alguns segundos */
-  html.com-js:not(.animacoes-prontas) [data-revelar] {
-    animation: aparecer-sozinho 0.6s ease 4s forwards;
-  }
-  @keyframes aparecer-sozinho {
-    to { opacity: 1; transform: none; clip-path: none; filter: none; }
-  }
-
-  /* 3. Parallax na rolagem (onde o navegador suporta animação guiada pela rolagem) */
-  @supports (animation-timeline: scroll()) {
-    .topo-mar {
-      animation: paralaxe-mar linear both;
-      animation-timeline: scroll(root);
-      animation-range: 0 100vh;
-    }
-    .topo-texto {
-      animation: paralaxe-texto linear both;
-      animation-timeline: scroll(root);
-      animation-range: 0 90vh;
-    }
-    .role-para-baixo {
-      animation: sumir linear both;
-      animation-timeline: scroll(root);
-      animation-range: 0 20vh;
-    }
-    @keyframes paralaxe-mar {
-      to { transform: translateY(26vh) scale(1.08); opacity: 0.3; }
-    }
-    @keyframes paralaxe-texto {
-      to { transform: translateY(-10vh); opacity: 0.15; }
-    }
-    @keyframes sumir {
-      to { opacity: 0; }
-    }
-  }
-}
-
-/* ══ OS EFEITOS AUTÔNOMOS (painel do topo, faixas, vitrine, diagnóstico, pulsos) ═══════════ */
-
-.ponto-vivo {
-  display: inline-block;
-  width: 6px;
-  height: 6px;
-  margin-right: 0.45rem;
-  border-radius: 50%;
-  background: var(--verde);
-  box-shadow: 0 0 8px var(--verde);
-  vertical-align: 0.1em;
-}
-.ponto-alerta {
-  background: #f87171;
-  box-shadow: 0 0 8px #f87171;
-}
-
-/* ── Telemetria nos cantos do topo ── */
-.telemetria {
-  position: absolute;
-  z-index: 2;
-  font-family: var(--font-geist-mono), ui-monospace, monospace;
-  font-size: 0.64rem;
-  line-height: 1.9;
-  letter-spacing: 0.2em;
-  color: rgba(167, 243, 208, 0.78);
-  text-shadow: 0 0 2px #030605, 0 1px 10px rgba(3, 6, 5, 0.95), 0 0 18px rgba(3, 6, 5, 0.9);
-  pointer-events: none;
-}
-.telemetria-alto {
-  top: 5.5rem;
-  right: max(1.25rem, calc((100vw - 72rem) / 2 + 2rem));
-  text-align: right;
-}
-.telemetria-baixo {
-  right: max(1.25rem, calc((100vw - 72rem) / 2 + 2rem));
-  bottom: 2.2rem;
-  text-align: right;
-}
-.telemetria .fluxo {
-  color: rgba(167, 243, 208, 0.5);
-}
-.telemetria {
-  padding: 0.45rem 0.75rem;
-  border-right: 2px solid rgba(110, 231, 183, 0.6);
-  background: linear-gradient(270deg, rgba(3, 6, 5, 0.82), rgba(3, 6, 5, 0.45));
-  backdrop-filter: blur(4px);
-}
-@media (max-width: 767px) {
-  .telemetria-alto {
-    top: 4.4rem;
-    right: 1rem;
-    font-size: 0.56rem;
-  }
-  .telemetria-baixo {
-    display: none;
-  }
-}
-
-/* ── O glitch de sinal no nome (posto pelo Hud.tsx de tempos em tempos) ── */
-.topo h1.glitch {
-  text-shadow: -3px 0 rgba(248, 113, 113, 0.75), 3px 0 rgba(103, 232, 249, 0.75);
-}
-
-/* ── Faixas correndo ── */
-.faixa {
-  position: relative;
-  z-index: 1;
-  overflow: hidden;
-  border-block: 1px solid var(--borda);
-  background: rgba(3, 6, 5, 0.55);
-  -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
-  mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
-}
-.faixa-trilho {
-  display: flex;
-  width: max-content;
-}
-.faixa-trecho {
-  display: flex;
-  flex-shrink: 0;
-}
-.faixa-trecho span {
-  display: inline-flex;
-  align-items: center;
-  gap: 1.6rem;
-  padding: 0.95rem 0.8rem;
-  font-family: var(--font-geist-mono), monospace;
-  font-size: 0.78rem;
-  letter-spacing: 0.24em;
-  text-transform: uppercase;
-  color: rgba(232, 241, 236, 0.55);
-  white-space: nowrap;
-}
-.faixa-trecho i {
-  font-style: normal;
-  font-size: 0.5rem;
-  color: var(--verde);
-  text-shadow: 0 0 8px var(--verde);
-}
-.faixa-reversa .faixa-trecho span {
-  font-family: var(--font-cormorant), serif;
-  font-size: 1.35rem;
-  font-style: italic;
-  letter-spacing: 0.02em;
-  text-transform: none;
-  color: rgba(232, 241, 236, 0.7);
-}
-
-/* ── O batimento atrás dos números ── */
-.batimento {
-  position: absolute;
-  inset: 50% 0 auto 0;
-  width: 200%;
-  height: 70px;
-  transform: translateY(-50%);
-  fill: none;
-  stroke: rgba(110, 231, 183, 0.16);
-  stroke-width: 1.5;
-  pointer-events: none;
-}
-.numeros dl {
-  position: relative;
-}
-
-/* ── A vitrine holográfica ── */
-.vitrine {
-  display: grid;
-  border: 1px solid var(--borda);
-  background: var(--superficie);
-}
-@media (min-width: 768px) {
-  .vitrine {
-    grid-template-columns: 1.55fr 1fr;
-  }
-}
-.vitrine-tela {
-  position: relative;
-  aspect-ratio: 16 / 10;
-  overflow: hidden;
-  background: #06100c;
-  border-bottom: 1px solid var(--borda);
-}
-@media (min-width: 768px) {
-  .vitrine-tela {
-    /* estica até a altura da coluna da direita (sem vazio embaixo) */
-    aspect-ratio: auto;
-    min-height: 26rem;
-    border-bottom: 0;
-    border-right: 1px solid var(--borda);
-  }
-}
-.vitrine-quadro {
-  position: absolute;
-  inset: 0;
-  opacity: 0;
-  visibility: hidden;
-}
-.vitrine-quadro.atual {
-  opacity: 1;
-  visibility: visible;
-}
-/* linhas de varredura fixas e um feixe que desce, como uma tela de transmissão */
-.vitrine-tela::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.16) 0 1px, transparent 1px 3px);
-  pointer-events: none;
-}
-.vitrine-varredura {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(180deg, transparent, rgba(167, 243, 208, 0.14) 48%, rgba(167, 243, 208, 0.28) 50%, transparent 52%);
-  background-size: 100% 220%;
-  pointer-events: none;
-  mix-blend-mode: screen;
-}
-.vitrine-rotulos {
-  position: absolute;
-  inset: 0.8rem 0.9rem auto 0.9rem;
-  z-index: 2;
-  display: flex;
-  justify-content: space-between;
-  font-family: var(--font-geist-mono), monospace;
-  font-size: 0.6rem;
-  letter-spacing: 0.22em;
-  color: #f0fdf7;
-  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.9);
-}
-.vitrine-rotulos span {
-  padding: 0.3rem 0.55rem;
-  background: rgba(3, 6, 5, 0.72);
-  border: 1px solid var(--borda);
-}
-.vitrine-legenda {
-  position: absolute;
-  z-index: 2;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.3rem;
-  padding: 2.4rem 1.2rem 1rem;
-  background: linear-gradient(0deg, rgba(3, 6, 5, 0.94), rgba(3, 6, 5, 0.6) 60%, transparent);
-}
-.vitrine-legenda span {
-  font-family: var(--font-geist-mono), monospace;
-  font-size: 0.62rem;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  color: var(--verde-claro);
-}
-.vitrine-legenda strong {
-  font-family: var(--font-cormorant), serif;
-  font-size: clamp(1.5rem, 2.6vw, 2.2rem);
-  font-weight: 300;
-  line-height: 1.1;
-  color: #fff;
-}
-.vitrine-lado {
-  display: flex;
-  flex-direction: column;
-  padding: 1.6rem;
-}
-@media (min-width: 640px) {
-  .vitrine-lado {
-    padding: 2.2rem;
-  }
-}
-.vitrine-lista {
-  border-top: 1px solid var(--borda);
-}
-.vitrine-lista button {
-  position: relative;
-  display: flex;
-  width: 100%;
-  align-items: baseline;
-  gap: 0.9rem;
-  padding: 0.75rem 0;
-  border-bottom: 1px solid var(--borda);
-  text-align: left;
-  color: var(--texto-suave);
-  transition: color 0.3s, padding-left 0.4s var(--suave);
-}
-.vitrine-lista button:hover,
-.vitrine-lista button.atual {
-  color: #fff;
-}
-.vitrine-lista button.atual {
-  padding-left: 0.6rem;
-}
-.vitrine-tempo {
-  position: absolute;
-  left: 0;
-  bottom: -1px;
-  height: 1px;
-  width: 100%;
-  background: var(--verde);
-  box-shadow: 0 0 8px var(--verde);
-  transform-origin: left;
-}
-
-/* ── O diagnóstico ao vivo ── */
-.diagnostico-cabeca {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  gap: 0.5rem 1.5rem;
-  padding: 0.9rem 1.4rem;
-  border-bottom: 1px solid var(--borda);
-  font-family: var(--font-geist-mono), monospace;
-  font-size: 0.62rem;
-  letter-spacing: 0.22em;
-  color: var(--verde-claro);
-}
-.diagnostico-cabeca span:last-child {
-  color: var(--texto-fraco);
-}
-.diagnostico-corpo {
-  display: grid;
-}
-@media (min-width: 768px) {
-  .diagnostico-corpo {
-    grid-template-columns: 1.55fr 1fr;
-  }
-}
-.diagnostico-saida {
-  min-height: 21rem;
-  margin: 0;
-  padding: 1.4rem;
-  font-family: var(--font-geist-mono), monospace;
-  font-size: 0.8rem;
-  line-height: 1.75;
-  color: var(--texto-suave);
-  white-space: pre-wrap;
-  word-break: break-word;
-  background: repeating-linear-gradient(0deg, rgba(167, 243, 208, 0.015) 0 1px, transparent 1px 3px);
-}
-.diagnostico-saida span:last-of-type::after {
-  content: '▌';
-  margin-left: 2px;
-  color: var(--verde);
-}
-.diagnostico.concluido .diagnostico-saida span:last-of-type {
-  color: var(--verde-claro);
-}
-.diagnostico-grafico {
-  display: flex;
-  flex-direction: column;
-  padding: 1.4rem;
-  border-top: 1px solid var(--borda);
-}
-@media (min-width: 768px) {
-  .diagnostico-grafico {
-    border-top: 0;
-    border-left: 1px solid var(--borda);
-  }
-}
-.diagnostico-grafico canvas {
-  width: 100%;
-  height: 8rem;
-  margin-top: 1rem;
-}
-
-/* ── Os pulsos de dados descendo pela linha do tempo ── */
-.linha-do-tempo::after {
-  content: '';
-  position: absolute;
-  left: -2px;
-  top: 0;
-  width: 5px;
-  height: 42px;
-  border-radius: 3px;
-  background: linear-gradient(180deg, transparent, var(--verde-claro));
-  box-shadow: 0 0 12px var(--verde);
-  opacity: 0;
-}
-
-/*
- * Movimento ambiente: vale para TODOS, inclusive quem pediu movimento reduzido no sistema (aí fica mais
- * lento). É lento, contínuo e não vem de interação: reduzir, não eliminar. Alguns sistemas (o Linux com
- * GTK, por exemplo) mandam "movimento reduzido" sem a pessoa ter pedido; a página não pode ficar morta.
- */
-.telemetria .ponto-vivo,
-.vitrine-rotulos .ponto-vivo,
-.diagnostico-cabeca .ponto-vivo {
-  animation: piscar-vivo 1.6s ease-in-out infinite;
-}
-.faixa-trilho {
-  animation: correr 46s linear infinite;
-}
-.faixa-reversa .faixa-trilho {
-  animation-duration: 58s;
-  animation-direction: reverse;
-}
-.faixa:hover .faixa-trilho {
-  animation-play-state: paused;
-}
-.batimento {
-  animation: bater 7s linear infinite;
-}
-.vitrine-varredura {
-  animation: varrer 4.5s linear infinite;
-}
-.vitrine-quadro.atual {
-  animation: aparecer 0.6s ease both;
-}
-.vitrine-tempo {
-  animation: tempo-vitrine var(--tempo) linear both;
-  animation-play-state: paused;
-}
-.vitrine.no-ar .vitrine-tempo {
-  animation-play-state: running;
-}
-.vitrine-legenda {
-  animation: aparecer 0.8s ease both 0.25s;
-}
-.linha-do-tempo.revelado::after {
-  animation: pulso-descendo 3.6s cubic-bezier(0.45, 0, 0.55, 1) infinite 1.5s;
-}
-.role-para-baixo span {
-  animation: gota 2.2s cubic-bezier(0.6, 0, 0.4, 1) infinite;
-}
-.contato {
-  animation: girar 7s linear infinite;
-}
-.titulo-contato {
-  animation: reflexo 6s ease-in-out infinite;
-}
+/* o balanço da etiqueta e o piscar dos LEDs são lentos e contínuos: ficam para todos, só mais calmos */
 @media (prefers-reduced-motion: reduce) {
-  .faixa-trilho { animation-duration: 110s; }
-  .faixa-reversa .faixa-trilho { animation-duration: 130s; }
-  .batimento { animation-duration: 16s; }
-  .contato { animation-duration: 18s; }
+  .inicio .sombra { animation-duration: 12s; }
+  .inicio .led { animation-duration: 3.2s; }
 }
 
-@keyframes piscar-vivo {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.25; }
-}
-@keyframes varrer {
-  from { background-position: 0 120%; }
-  to { background-position: 0 -120%; }
-}
-@keyframes correr {
-  to { transform: translateX(-50%); }
-}
-@keyframes bater {
-  to { transform: translate(-50%, -50%); }
-}
-@keyframes aparecer {
-  from { opacity: 0; }
-}
-@keyframes tempo-vitrine {
-  from { transform: scaleX(0); }
-  to { transform: scaleX(1); }
-}
-@keyframes pulso-descendo {
-  0% { top: 0; opacity: 0; }
-  10% { opacity: 1; }
-  85% { opacity: 1; }
-  100% { top: calc(100% - 42px); opacity: 0; }
-}
-@keyframes gota {
-  from { top: -1rem; }
-  to { top: 3.4rem; }
-}
-@keyframes girar {
-  to { --angulo: 360deg; }
-}
-@keyframes reflexo {
-  0%, 55% { background-position: 100% 0; }
-  85%, 100% { background-position: 0% 0; }
-}
+@keyframes subir { from { opacity: 0; transform: translateY(16px); } }
+@keyframes balanco { 0%, 100% { transform: rotate(-0.6deg); } 50% { transform: rotate(0.6deg); } }
+@keyframes piscar { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+@keyframes previa-entra { from { opacity: 0; transform: translateY(12px); } }
 
-/* Os movimentos bruscos (glitch, a troca com interferência): só para quem não pediu movimento reduzido */
-@media (prefers-reduced-motion: no-preference) {
-  .topo h1.glitch {
-    animation: glitch-nome 0.42s steps(2, end);
+/* ── Tablet e celular ── */
+@media (max-width: 980px) {
+  .inicio {
+    .topo { grid-template-columns: 1fr; padding-top: 48px; padding-bottom: 120px; }
+    .pendurada { min-height: 300px; }
+    .cordao { display: none; }
+    .projetos .grade, .lab .grade, .duas { grid-template-columns: 1fr; }
+    .exp .linha { grid-template-columns: 1fr; gap: 6px; }
+    .contato { grid-template-columns: 1fr; }
+    .contato .links { text-align: left; }
   }
-  .vitrine-quadro.atual {
-    animation: transmissao 0.65s steps(6, end);
-  }
-  .vitrine-legenda {
-    animation: entrar 0.8s var(--suave) both 0.25s;
-  }
-  @keyframes glitch-nome {
-    0% { clip-path: inset(10% 0 55% 0); transform: translate(-6px, 0); }
-    25% { clip-path: inset(60% 0 8% 0); transform: translate(5px, 0); }
-    50% { clip-path: inset(30% 0 40% 0); transform: translate(-3px, 0) skewX(-8deg); }
-    75% { clip-path: inset(0 0 80% 0); transform: translate(4px, 0); }
-    100% { clip-path: inset(0); transform: none; }
-  }
-  @keyframes transmissao {
-    0% { clip-path: inset(0 0 100% 0); filter: brightness(2) saturate(0); transform: translateX(-8px); }
-    30% { clip-path: inset(20% 0 40% 0); filter: brightness(1.6) hue-rotate(60deg); transform: translateX(6px); }
-    55% { clip-path: inset(0 0 30% 0); filter: brightness(1.3); transform: translateX(-3px); }
-    100% { clip-path: inset(0); filter: none; transform: none; }
+}
+@media (max-width: 680px) {
+  .inicio {
+    .aba, .cabecalho-links, .detalhes, .regua-topo, .lab .corte-verde { display: none; }
+    .miolo { margin-right: 0; }
+    .etiqueta { width: 100%; }
+    .canhoto { width: 56px; }
+    .experimento { min-height: 400px; }
+    .etiqueta .cargo { font-size: 24px; white-space: normal; }
+    .pilares .grade { grid-template-columns: 1fr; }
+    .pilares .grade > div { padding: 22px 0 24px; }
+    .pilares .grade > div + div { padding-left: 0; border-left: 0; border-top: 1px solid var(--fio); }
+    .portal { left: var(--margem); right: var(--margem); }
+    .cabecalho-secao { flex-direction: column; align-items: flex-start; }
+    .cabecalho-secao .lado { text-align: left; }
+    .secao { padding-block: 72px; }
+    .pilares { padding-top: 0; }
+    .duas { padding-top: 0; }
+    .rodape { flex-direction: column; }
   }
 }

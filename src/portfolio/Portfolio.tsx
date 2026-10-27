@@ -3,68 +3,60 @@ import Link from 'next/link';
 import type { CSSProperties } from 'react';
 import { Animacoes } from './Animacoes';
 import {
-  COMPETENCIAS, CURIOSIDADE, DESTAQUE, EXPERIENCIA, FERRAMENTAS, FORMACAO, LABORATORIO, NUMEROS, PESSOA, PROJETOS,
+  CURIOSIDADE, DESTAQUE, EXPERIENCIA, FERRAMENTAS, FORMACAO, LABORATORIO, PESSOA, PILARES, PROJETOS,
   type Link as LinkDoProjeto, type Projeto,
 } from './conteudo';
-import { Diagnostico } from './Diagnostico';
-import { Faiscas } from './Faiscas';
-import { Faixa } from './Faixa';
-import { Telemetria } from './Hud';
-import { MarDePontos } from './MarDePontos';
+import { archivo } from './fontes';
+import { Leds } from './Leds';
+import { Barras, Regua } from './Pecas';
 import { PreviaCurriculo } from './PreviaCurriculo';
-import { VideoArvore } from './VideoArvore';
-import { Vitrine } from './Vitrine';
 import './portfolio.css';
 
 /**
- * O portfólio: a porta da frente do site. O conteúdo chega pronto do servidor (o Google lê, abre rápido);
- * o movimento vem por cima, em componentes pequenos: as faíscas do fundo, o vídeo da árvore e as entradas
- * em cena ao rolar (Animacoes). A experiência 3D fica em /experiencia.
+ * O portfólio: a porta da frente do site. Mesma linguagem da capa do LinkedIn: fundo branco, tinta, verde
+ * Loki só nos detalhes, títulos condensados e peças pequenas de "sistema" (ID, código de barras, régua, LEDs,
+ * etiqueta). O conteúdo chega pronto do servidor (o Google lê, abre rápido); o movimento vem por cima, no
+ * Animacoes. O 3D é o diferencial: mora no Laboratório e num cantinho do topo.
  */
 export function Portfolio() {
   return (
-    <div className="portfolio min-h-dvh">
+    <div className={`inicio ${archivo.variable}`}>
       {/* Antes da primeira pintura: avisa o CSS que há JavaScript, para esconder o que ainda vai entrar em cena */}
       <script dangerouslySetInnerHTML={{ __html: "document.documentElement.classList.add('com-js')" }} />
-      <Faiscas />
-      <div className="barra-progresso" aria-hidden="true" />
-      <Cabecalho />
-      <main className="relative">
-        <Topo />
-        <Numeros />
-        <Faixa itens={FERRAMENTAS} />
-        <Destaque />
-        <Projetos />
-        <Experiencia />
-        <Formacao />
-        <Laboratorio />
-        <Faixa itens={COMPETENCIAS} reverso />
-        <Contato />
-      </main>
-      <Rodape />
+      <div className="aba mono" aria-hidden="true"><span>SE // TPM</span></div>
+      <div className="miolo">
+        <Cabecalho />
+        <main>
+          <Topo />
+          <Pilares />
+          <Projetos />
+          <Laboratorio />
+          <Experiencia />
+          <FormacaoEFerramentas />
+          <Contato />
+        </main>
+        <Rodape />
+      </div>
       <Animacoes />
     </div>
   );
 }
 
-const largura = 'mx-auto w-full max-w-6xl px-5 sm:px-8';
+const n2 = (i: number) => String(i + 1).padStart(2, '0');
 const atraso = (ms: number) => ({ '--atraso': `${ms}ms` }) as CSSProperties;
 
 function Cabecalho() {
   return (
-    <header className="cabecalho fixed inset-x-0 top-0 z-20">
-      <nav className={`${largura} flex h-14 items-center justify-between gap-4`} aria-label="Principal">
-        <a href="#topo" className="font-serif text-xl tracking-wide">
-          {PESSOA.nome}
-        </a>
-        <div className="flex items-center gap-5 font-mono text-[0.72rem] uppercase tracking-[0.18em] text-[var(--texto-suave)]">
-          <a href="#projetos" className="link-linha hidden sm:inline">Projetos</a>
-          <a href="#experiencia" className="link-linha hidden sm:inline">Experiência</a>
-          <a href="#contato" className="link-linha hidden sm:inline">Contato</a>
-          <Link href="/experiencia" className="link-linha text-[var(--verde-claro)]">
-            Experiência 3D →
-          </Link>
+    <header className="cabecalho">
+      <nav className="cabecalho-linha" aria-label="Principal">
+        <a href="#topo" className="marca mono"><span className="q" /><span data-cifra>GT — 001</span></a>
+        <div className="cabecalho-links mono">
+          <a href="#projetos" data-cifra>Projetos</a>
+          <a href="#laboratorio" data-cifra>Laboratório</a>
+          <a href="#experiencia" data-cifra>Experiência</a>
+          <a href="#contato" data-cifra>Contato</a>
         </div>
+        <span className="estado mono"><span className="led" />Online</span>
       </nav>
     </header>
   );
@@ -72,241 +64,202 @@ function Cabecalho() {
 
 function Topo() {
   return (
-    <section id="topo" className="topo relative flex min-h-dvh items-end overflow-hidden pb-[6vh] pt-[48svh] md:items-center md:pb-0 md:pt-28">
-      <div className="topo-mar" aria-hidden="true">
-        <MarDePontos />
-      </div>
-      <Telemetria />
-      <div className={`${largura} topo-texto relative`}>
-        <p className="entra w-fit font-mono text-[0.72rem] uppercase tracking-[0.32em] text-[var(--verde-claro)]" style={atraso(150)} data-decodificar="250">
-          {PESSOA.cargo}
-        </p>
-        <h1 className="mt-4 w-fit font-serif text-[clamp(3.2rem,8vw,6.6rem)] font-light leading-[0.95] tracking-[-0.01em]" aria-label={PESSOA.nome}>
-          {[...PESSOA.nome].map((letra, i) => (
-            <span key={i} aria-hidden="true" className="letra" style={atraso(380 + i * 45)}>
-              {letra === ' ' ? ' ' : letra}
-            </span>
-          ))}
-        </h1>
-        <p className="entra mt-6 w-fit max-w-xl text-[clamp(1.05rem,1.6vw,1.25rem)] leading-relaxed text-[var(--texto-suave)]" style={atraso(1050)}>
-          {PESSOA.frase}
-        </p>
-        <div className="mt-9 flex w-fit flex-wrap gap-3">
-          <a href="#projetos" className="entra botao botao-principal" style={atraso(1250)}>Ver projetos</a>
-          <Link href="/experiencia" className="entra botao" style={atraso(1350)}>Entrar na experiência</Link>
-          <PreviaCurriculo className="entra botao" style={atraso(1450)} />
+    <section id="topo" className="topo listras" aria-labelledby="nome">
+      <span className="corte ce" /><span className="corte cd" /><span className="corte be" /><span className="corte bd" />
+
+      <div className="apresenta">
+        <p className="entra id mono" style={atraso(100)}><span className="q" /><span data-cifra="200">Perfil // Brasília, DF · BR</span></p>
+        <h1 id="nome" className="condensada entra" style={atraso(220)}>Guilherme<br />Trent</h1>
+        <p className="frase entra" style={atraso(380)}>{PESSOA.frase}</p>
+        <p className="onde mono entra" style={atraso(480)}>Remoto · híbrido · presencial em Brasília</p>
+        <div className="acoes entra" style={atraso(580)}>
+          <a className="botao chanfro mono" href="#projetos" data-cifra="700">Ver projetos <span className="seta" aria-hidden="true">→</span></a>
+          <PreviaCurriculo className="botao vazado mono" />
+          <span className="redes mono">
+            <a href={PESSOA.linkedin} target="_blank" rel="noreferrer">LinkedIn ↗</a>
+            <a href={PESSOA.github} target="_blank" rel="noreferrer">GitHub ↗</a>
+          </span>
         </div>
-        <p className="entra mt-8 w-fit font-mono text-[0.72rem] tracking-[0.14em] text-[var(--texto-fraco)]" style={atraso(1650)}>{PESSOA.local}</p>
+        <div className="detalhes entra" style={atraso(720)} aria-hidden="true">
+          <div><Leds /><p className="rot mono">Sistemas · ativos</p></div>
+          <div><Barras barras={30} altura={20} /><p className="rot mono">15°47′S · 47°52′W</p></div>
+        </div>
       </div>
-      <a href="#projetos" className="entra role-para-baixo" style={atraso(2200)} aria-label="Ir para os projetos">
-        <span />
-      </a>
+
+      <div className="pendurada entra" style={atraso(300)}>
+        <span className="cordao" aria-hidden="true" />
+        <div className="sombra">
+          <div className="etiqueta chanfro">
+            <div className="canhoto" aria-hidden="true"><span className="furo" /><span className="n mono">Nº 001</span></div>
+            <div className="corpo">
+              <p className="cab mono"><span data-cifra="500">Perfil // Profissional</span><span className="on"><span className="led" />Online</span></p>
+              <p className="cargo condensada">Software Engineer</p>
+              <p className="cargo condensada">Technical Product Manager</p>
+              <div className="pe mono"><span>Full Stack · Cloud &amp; AI</span><Barras barras={22} altura={16} semente={11} className="claras" /></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <Regua tracos={60} passo={8} altura={10} className="regua-topo" />
+
+      <Link className="portal mono entra" style={atraso(900)} href="/experiencia" title="Entrar na experiência em 3D">
+        <Image className="chanfro" src={DESTAQUE.imagem.src} alt="" width={56} height={56} />
+        <span className="t"><b data-cifra="1000">EXP — 01 · A árvore</b>Experiência em 3D</span>
+        <span className="seta" aria-hidden="true">→</span>
+      </Link>
     </section>
   );
 }
 
-function Numeros() {
+function Pilares() {
   return (
-    <section aria-label="Números" className="numeros relative overflow-hidden border-y border-[var(--borda)] bg-[rgba(3,6,5,0.6)] backdrop-blur-[2px]">
-      {/* O batimento correndo atrás dos números: eco do coração no fim da experiência */}
-      <svg className="batimento" viewBox="0 0 1200 60" preserveAspectRatio="none" aria-hidden="true">
-        <path d="M0 30 H140 l10 -4 l8 4 h18 l6 10 l10 -34 l9 40 l7 -16 h22 l12 -6 l12 6 H600 H740 l10 -4 l8 4 h18 l6 10 l10 -34 l9 40 l7 -16 h22 l12 -6 l12 6 H1200" />
-      </svg>
-      <dl className={`${largura} grid grid-cols-2 gap-y-8 py-10 md:grid-cols-4`}>
-        {NUMEROS.map((n, i) => (
-          <div key={n.rotulo} className="numero pr-4" data-revelar="subir" style={atraso(i * 120)}>
-            <dt className="sr-only">{n.rotulo}</dt>
-            <dd className="font-serif text-[clamp(2.2rem,4vw,3.2rem)] font-light leading-none text-white" data-revelar="nada" data-contar="">
-              {n.valor}
-            </dd>
-            <dd className="mt-2 max-w-[14rem] text-sm leading-snug text-[var(--texto-suave)]">{n.rotulo}</dd>
+    <section className="pilares secao" aria-label="O que eu faço">
+      <div className="grade">
+        {PILARES.map((p, i) => (
+          <div key={p.titulo} data-revelar style={atraso(i * 90)}>
+            <span className="n mono">{n2(i)}</span>
+            <h2 className="condensada">{p.titulo}</h2>
+            <p>{p.texto}</p>
           </div>
         ))}
-      </dl>
-    </section>
-  );
-}
-
-function RotuloSecao({ children, id }: { children: React.ReactNode; id?: string }) {
-  return (
-    <p className="rotulo-secao" id={id} data-revelar="linha">
-      <span>{children}</span>
-    </p>
-  );
-}
-
-function Destaque() {
-  const p = DESTAQUE;
-  return (
-    <section aria-labelledby="destaque" className={`${largura} relative pt-24 md:pt-32`}>
-      <RotuloSecao>Projeto em destaque</RotuloSecao>
-      <article className="cartao cantos mt-8 grid overflow-hidden md:grid-cols-[1.25fr_1fr]" data-revelar="subir">
-        <div className="cartao-imagem relative aspect-[16/10] md:aspect-auto md:border-b-0 md:border-r" data-revelar="cortina">
-          <VideoArvore capa="/portfolio/arvore-capa.webp" alt={p.imagem.alt} somenteVisivel className="absolute inset-0" />
-        </div>
-        <div className="flex flex-col p-6 sm:p-9">
-          <p className="font-mono text-[0.7rem] uppercase tracking-[0.22em] text-[var(--verde-claro)]">{p.selo}</p>
-          <h2 id="destaque" className="mt-3 font-serif text-[clamp(2rem,3.4vw,2.8rem)] font-light leading-tight">{p.nome}</h2>
-          <p className="mt-4 leading-relaxed text-[var(--texto-suave)]">{p.proposta}</p>
-          <Beneficios projeto={p} />
-          <p className="mt-6 font-mono text-[0.72rem] leading-relaxed tracking-[0.06em] text-[var(--texto-fraco)]">{p.stack}</p>
-          <Links links={p.links} principal />
-        </div>
-      </article>
-      <div className="mt-6" data-revelar="subir">
-        <Diagnostico />
       </div>
     </section>
+  );
+}
+
+function CabecalhoSecao({ numero, titulo, id, lado }: { numero: number; titulo: string; id: string; lado?: string }) {
+  return (
+    <div className="cabecalho-secao">
+      <div>
+        <p className="num mono" data-cifra>{`// ${String(numero).padStart(2, '0')} · ${titulo}`}</p>
+        <h2 id={id} className="condensada">{titulo}</h2>
+      </div>
+      {lado && <p className="lado mono">{lado}</p>}
+    </div>
   );
 }
 
 function Projetos() {
+  const emProducao = PROJETOS.filter((p) => p.selo === 'em produção').length;
   return (
-    <section id="projetos" aria-labelledby="titulo-projetos" className={`${largura} relative scroll-mt-20 pt-24 md:pt-32`}>
-      <RotuloSecao id="titulo-projetos">Projetos</RotuloSecao>
-      <div className="mt-8" data-revelar="subir">
-        <Vitrine projetos={PROJETOS} />
-      </div>
-      <div className="mt-6 grid gap-6 md:grid-cols-2">
-        {PROJETOS.map((p, i) => (
-          <article key={p.id} className="cartao flex flex-col overflow-hidden" data-revelar="subir" style={atraso((i % 2) * 140)}>
-            <div className="flex flex-1 flex-col p-6 sm:p-7">
-              <p className="font-mono text-[0.68rem] uppercase tracking-[0.22em] text-[var(--verde-claro)]">{p.selo}</p>
-              <h3 className="mt-2 font-serif text-[1.9rem] font-light leading-tight">{p.nome}</h3>
-              <p className="mt-3 leading-relaxed text-[var(--texto-suave)]">{p.proposta}</p>
-              <Beneficios projeto={p} />
-              <p className="mt-auto pt-6 font-mono text-[0.7rem] leading-relaxed tracking-[0.06em] text-[var(--texto-fraco)]">{p.stack}</p>
-              <Links links={p.links} />
-            </div>
-          </article>
-        ))}
+    <section id="projetos" className="projetos secao" aria-labelledby="titulo-projetos">
+      <CabecalhoSecao numero={1} titulo="Projetos" id="titulo-projetos" lado={`${PROJETOS.length} fichas · ${emProducao} em produção`} />
+      <div className="grade">
+        {PROJETOS.map((p, i) => <Ficha key={p.id} projeto={p} indice={i} total={PROJETOS.length} />)}
       </div>
     </section>
   );
 }
 
-function Beneficios({ projeto }: { projeto: Projeto }) {
+function Ficha({ projeto: p, indice, total }: { projeto: Projeto; indice: number; total: number }) {
   return (
-    <ul className="beneficios mt-5 space-y-2.5 text-[0.95rem] leading-relaxed">
-      {projeto.beneficios.map((b) => (
-        <li key={b.titulo} className="flex gap-3">
-          <span aria-hidden="true" className="losango mt-[0.6rem] h-[5px] w-[5px] shrink-0 rotate-45 border border-[var(--verde)]" />
-          <span>
-            <strong className="font-medium text-white">{b.titulo}</strong>
-            {b.texto && <span className="text-[var(--texto-suave)]"> {b.texto}</span>}
-          </span>
-        </li>
-      ))}
-    </ul>
+    <article className="ficha chanfro" data-revelar style={atraso((indice % 2) * 110)}>
+      <div className="foto">
+        <Image src={p.imagem.src} alt={p.imagem.alt} fill sizes="(min-width: 981px) 45vw, 100vw" />
+        <span className="selo mono">{p.selo === 'em produção' && <span className="led" />}{p.selo}</span>
+      </div>
+      <div className="corpo">
+        <p className="id mono"><span>PROJ — {n2(indice)}</span><span>Ficha {n2(indice)} / {String(total).padStart(2, '0')}</span></p>
+        <h3 className="condensada">{p.nome}</h3>
+        <p className="proposta">{p.proposta}</p>
+        <ol>
+          {p.beneficios.map((b, j) => (
+            <li key={b.titulo}><span className="mono">{n2(j)}</span><span><b>{b.titulo}</b> {b.texto}</span></li>
+          ))}
+        </ol>
+        <div className="pe">
+          <p className="stack mono">{p.stack}</p>
+          <div className="links">{p.links.map((l) => <LinkFicha key={l.href} link={l} />)}</div>
+        </div>
+      </div>
+    </article>
   );
 }
 
-function Links({ links, principal = false }: { links: LinkDoProjeto[]; principal?: boolean }) {
+function LinkFicha({ link: l }: { link: LinkDoProjeto }) {
+  if (l.interno) return <Link href={l.href} className="link mono">{l.rotulo} →</Link>;
+  return <a href={l.href} target="_blank" rel="noreferrer" className="link mono">{l.rotulo} ↗</a>;
+}
+
+function Laboratorio() {
+  const { cidade } = LABORATORIO;
+  const experimentos = [
+    { id: 'EXP — 01', selo: DESTAQUE.selo, nome: DESTAQUE.nome, texto: DESTAQUE.proposta, href: '/experiencia', imagem: DESTAQUE.imagem, largo: true },
+    { id: 'EXP — 02', selo: cidade.selo.replace('experimento · ', ''), nome: cidade.nome, texto: cidade.proposta, href: cidade.href, imagem: { src: '/portfolio/cidade.webp', alt: 'A Cidade Neon, desenhada em canvas 2D' }, largo: false },
+  ];
   return (
-    <div className="mt-6 flex flex-wrap gap-3">
-      {links.map((l, i) => {
-        const classe = `botao ${principal && i === 0 ? 'botao-principal' : ''}`;
-        return l.interno ? (
-          <Link key={l.href} href={l.href} className={classe}>{l.rotulo}</Link>
-        ) : (
-          <a key={l.href} href={l.href} target="_blank" rel="noreferrer" className={classe}>
-            {l.rotulo} <span aria-hidden="true" className="seta">↗</span>
-          </a>
-        );
-      })}
-    </div>
+    <section id="laboratorio" className="lab secao" aria-labelledby="titulo-lab">
+      <span className="listras-claras" aria-hidden="true" /><span className="corte-verde" aria-hidden="true" />
+      <CabecalhoSecao numero={2} titulo="Laboratório" id="titulo-lab" lado="Experimentos que moram no site" />
+      <div className="grade">
+        {experimentos.map((e, i) => (
+          <Link key={e.id} href={e.href} className="experimento chanfro" data-revelar style={atraso(i * 110)}>
+            <Image src={e.imagem.src} alt={e.imagem.alt} fill sizes={e.largo ? '(min-width: 981px) 55vw, 100vw' : '(min-width: 981px) 42vw, 100vw'} />
+            <span className="entrar mono">Entrar →</span>
+            <span className="info">
+              <span className="mono">{e.id} · {e.selo}</span>
+              <span className="nome condensada">{e.nome}</span>
+              <span className="texto">{e.texto}</span>
+            </span>
+          </Link>
+        ))}
+      </div>
+    </section>
   );
 }
 
 function Experiencia() {
   return (
-    <section id="experiencia" aria-labelledby="titulo-experiencia" className={`${largura} relative scroll-mt-20 pt-24 md:pt-32`}>
-      <RotuloSecao id="titulo-experiencia">Experiência</RotuloSecao>
-      <div className="mt-10 grid gap-12 md:grid-cols-[1fr_18rem]">
-        <ol className="linha-do-tempo space-y-10 pl-8" data-revelar="nada">
-          {EXPERIENCIA.map((e) => (
-            <li key={e.cargo + e.quando} className="relative" data-revelar="lado">
-              <p className="font-mono text-[0.7rem] uppercase tracking-[0.18em] text-[var(--texto-fraco)]">{e.quando}</p>
-              <h3 className="mt-1.5 text-lg font-medium text-white">{e.cargo}</h3>
-              <p className="text-[var(--verde-claro)]">{e.onde}</p>
-              <p className="mt-2 max-w-2xl leading-relaxed text-[var(--texto-suave)]">{e.texto}</p>
-            </li>
-          ))}
-        </ol>
-        <aside className="cartao cantos h-fit p-6" data-revelar="subir" style={atraso(200)}>
-          <p className="font-mono text-[0.68rem] uppercase tracking-[0.22em] text-[var(--verde-claro)]">Curiosidade</p>
-          <p className="mt-3 leading-relaxed text-[var(--texto-suave)]">{CURIOSIDADE}</p>
-        </aside>
-      </div>
+    <section id="experiencia" className="exp secao" aria-labelledby="titulo-exp">
+      <CabecalhoSecao numero={3} titulo="Experiência" id="titulo-exp" lado="Desde 2020" />
+      <ol>
+        {EXPERIENCIA.map((x) => (
+          <li key={x.cargo} className="linha" data-revelar>
+            <span className="quando mono">{x.quando}</span>
+            <div><h3 className="condensada">{x.cargo}</h3><p className="onde">{x.onde}</p></div>
+            <p>{x.texto}</p>
+          </li>
+        ))}
+      </ol>
+      <p className="curiosidade chanfro" data-revelar><span className="mono">Curiosidade</span><span>{CURIOSIDADE}</span></p>
     </section>
   );
 }
 
-function Formacao() {
+function FormacaoEFerramentas() {
   return (
-    <section aria-labelledby="titulo-formacao" className={`${largura} relative pt-24 md:pt-32`}>
-      <RotuloSecao id="titulo-formacao">Formação e ferramentas</RotuloSecao>
-      <div className="mt-10 grid gap-12 md:grid-cols-2">
-        <ul className="space-y-6">
-          {FORMACAO.map((f, i) => (
-            <li key={f.curso} data-revelar="subir" style={atraso(i * 90)}>
-              <p className="text-white">{f.curso}</p>
-              <p className="text-sm text-[var(--texto-suave)]">{f.onde} · {f.quando}</p>
-            </li>
-          ))}
-        </ul>
-        <ul className="flex h-fit flex-wrap gap-2" aria-label="Ferramentas">
-          {FERRAMENTAS.map((f, i) => (
-            <li key={f} className="ficha border border-[var(--borda)] px-3 py-1.5 font-mono text-[0.75rem] tracking-[0.04em] text-[var(--texto-suave)]" data-revelar="estalo" style={atraso(i * 45)}>
-              {f}
-            </li>
+    <section className="duas secao" aria-label="Formação e ferramentas">
+      <div>
+        <CabecalhoSecao numero={4} titulo="Formação" id="titulo-formacao" />
+        <ul className="formacao">
+          {FORMACAO.map((f) => (
+            <li key={f.curso} data-revelar><span><b>{f.curso}</b><span>{f.onde}</span></span><span className="mono">{f.quando}</span></li>
           ))}
         </ul>
       </div>
-    </section>
-  );
-}
-
-function Laboratorio() {
-  const c = LABORATORIO.cidade;
-  return (
-    <section id="laboratorio" aria-labelledby="titulo-laboratorio" className={`${largura} relative scroll-mt-20 pb-24 pt-24 md:pb-32 md:pt-32`}>
-      <RotuloSecao id="titulo-laboratorio">Laboratório</RotuloSecao>
-      <article className="cartao cantos mt-8 grid overflow-hidden md:grid-cols-[1fr_1.25fr]" data-revelar="subir">
-        <div className="flex flex-col p-6 sm:p-9">
-          <p className="font-mono text-[0.7rem] uppercase tracking-[0.22em] text-[var(--verde-claro)]">{c.selo}</p>
-          <h3 className="mt-3 font-serif text-[clamp(2rem,3.4vw,2.8rem)] font-light leading-tight">{c.nome}</h3>
-          <p className="mt-4 leading-relaxed text-[var(--texto-suave)]">{c.proposta}</p>
-          <p className="mt-6 font-mono text-[0.72rem] leading-relaxed tracking-[0.06em] text-[var(--texto-fraco)]">{c.stack}</p>
-          <div className="mt-6 flex flex-wrap gap-3">
-            <Link href={c.href} className="botao botao-principal">Visitar a cidade <span aria-hidden="true" className="seta">→</span></Link>
-          </div>
-        </div>
-        <Link href={c.href} tabIndex={-1} aria-hidden="true" className="cartao-imagem relative order-first aspect-[16/10] border-b border-[var(--borda)] md:order-last md:aspect-auto md:border-b-0 md:border-l" data-revelar="cortina">
-          <Image src="/portfolio/cidade.webp" alt="" fill sizes="(min-width: 768px) 55vw, 100vw" className="object-cover" />
-        </Link>
-      </article>
+      <div>
+        <CabecalhoSecao numero={5} titulo="Ferramentas" id="titulo-ferramentas" />
+        <ul className="chips mono" data-revelar>
+          {FERRAMENTAS.map((f) => <li key={f}>{f}</li>)}
+        </ul>
+      </div>
     </section>
   );
 }
 
 function Contato() {
   return (
-    <section id="contato" aria-labelledby="titulo-contato" className={`${largura} relative scroll-mt-20 py-24 md:py-36`}>
-      <div className="contato cartao cantos px-6 py-14 text-center sm:px-12" data-revelar="subir">
-        <p className="rotulo-secao justify-center before:h-px before:flex-1 before:bg-[linear-gradient(270deg,var(--borda-forte),transparent)] before:content-['']">
-          <span>Contato</span>
-        </p>
-        <h2 id="titulo-contato" className="titulo-contato mt-6 font-serif text-[clamp(2.4rem,5vw,4rem)] font-light italic">Vamos conversar?</h2>
-        <a href={`mailto:${PESSOA.email}`} className="email mt-5 inline-block text-lg text-[var(--verde-claro)]">
-          {PESSOA.email}
-        </a>
-        <div className="mt-9 flex flex-wrap justify-center gap-3">
-          <a href={PESSOA.linkedin} target="_blank" rel="noreferrer" className="botao">LinkedIn <span aria-hidden="true" className="seta">↗</span></a>
-          <a href={PESSOA.github} target="_blank" rel="noreferrer" className="botao">GitHub <span aria-hidden="true" className="seta">↗</span></a>
-          <PreviaCurriculo className="botao" />
-          <a href={PESSOA.curriculo} download className="botao botao-principal">Baixar currículo</a>
-        </div>
+    <section id="contato" className="contato secao" aria-labelledby="titulo-contato">
+      <div>
+        <p className="num mono" data-cifra>{'// 06 · Contato'}</p>
+        <h2 id="titulo-contato" className="condensada">Vamos construir<br />algo juntos?</h2>
+        <a className="email" href={`mailto:${PESSOA.email}`}>{PESSOA.email} <span aria-hidden="true">→</span></a>
+      </div>
+      <div className="links mono">
+        <a href={PESSOA.linkedin} target="_blank" rel="noreferrer">LinkedIn ↗</a>
+        <a href={PESSOA.github} target="_blank" rel="noreferrer">GitHub ↗</a>
+        <a href={PESSOA.curriculo} download>Baixar currículo (PDF) ↓</a>
       </div>
     </section>
   );
@@ -314,13 +267,9 @@ function Contato() {
 
 function Rodape() {
   return (
-    <footer className="relative border-t border-[var(--borda)]">
-      <div className={`${largura} flex flex-col gap-2 py-8 font-mono text-[0.7rem] tracking-[0.08em] text-[var(--texto-fraco)] sm:flex-row sm:justify-between`}>
-        <p>Feito por {PESSOA.nome}</p>
-        <p>
-          A <Link href="/experiencia" className="link-linha text-[var(--texto-suave)]">experiência 3D</Link> roda no Regente, o meu motor próprio.
-        </p>
-      </div>
+    <footer className="rodape mono">
+      <p>© {new Date().getFullYear()} {PESSOA.nome}</p>
+      <p>A <Link href="/experiencia">experiência 3D</Link> roda no Regente, o meu motor próprio.</p>
     </footer>
   );
 }

@@ -15,7 +15,7 @@ export const metadata: Metadata = {
  */
 export default function PaginaDaCidade() {
   return (
-    <div className="portfolio cidade-pagina min-h-dvh">
+    <div className="cidade-pagina min-h-dvh">
       <Cidade />
       <section aria-labelledby="bastidores" className="relative z-[3] mx-auto w-full max-w-6xl px-5 py-24 sm:px-8 md:py-32">
         <p className="rotulo-secao" id="bastidores"><span>Como foi feita</span></p>

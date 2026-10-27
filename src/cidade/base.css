@@ -1,0 +1,173 @@
+/*
+ * A base escura que a Cidade Neon herdou do portfólio antigo: variáveis, rótulo de seção, botões,
+ * ponto vivo e telemetria. O portfólio mudou de visual; a cidade é um experimento com identidade própria.
+ */
+
+.cidade-pagina {
+  --fundo: #030605;
+  --superficie: rgba(167, 243, 208, 0.035);
+  --borda: rgba(167, 243, 208, 0.12);
+  --borda-forte: rgba(167, 243, 208, 0.28);
+  --texto: #e8f1ec;
+  --texto-suave: rgba(232, 241, 236, 0.66);
+  --texto-fraco: rgba(232, 241, 236, 0.42);
+  --verde: #6ee7b7;
+  --verde-claro: #a7f3d0;
+  --suave: cubic-bezier(0.2, 0.7, 0.2, 1);
+
+  background: var(--fundo);
+  color: var(--texto);
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  overflow-x: clip;
+  background-image:
+    radial-gradient(60rem 40rem at 78% -10%, rgba(16, 185, 129, 0.16), transparent 70%),
+    radial-gradient(50rem 36rem at -10% 35%, rgba(20, 83, 45, 0.22), transparent 70%);
+  background-attachment: fixed;
+}
+.cidade-pagina main,
+.cidade-pagina footer {
+  position: relative;
+  z-index: 1;
+}
+.cidade-pagina ::selection {
+  background: rgba(110, 231, 183, 0.3);
+}
+.cidade-pagina a:focus-visible,
+.cidade-pagina button:focus-visible {
+  outline: 1px solid var(--verde-claro);
+  outline-offset: 3px;
+}
+
+/* ── Rótulo de seção: o "Y G G D R A S I L" do diálogo da árvore ─────────── */
+.cidade-pagina .rotulo-secao {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--verde-claro);
+}
+.cidade-pagina .rotulo-secao span {
+  opacity: 0.85;
+}
+.cidade-pagina .rotulo-secao::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, var(--borda-forte), transparent);
+  transform-origin: left;
+}
+
+/* ── Botões: um brilho atravessa ao passar o mouse; a seta avança ───────── */
+.cidade-pagina .botao {
+  position: relative;
+  overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 2.75rem;
+  padding: 0 1.15rem;
+  border: 1px solid var(--borda-forte);
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: 0.78rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--texto);
+  transition: border-color 0.25s, background-color 0.25s, box-shadow 0.35s;
+}
+.cidade-pagina .botao::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 35%, rgba(240, 253, 247, 0.22) 50%, transparent 65%);
+  transform: translateX(-120%);
+  transition: transform 0.7s var(--suave);
+  pointer-events: none;
+}
+.cidade-pagina .botao:hover {
+  border-color: var(--verde-claro);
+  background: rgba(167, 243, 208, 0.06);
+  box-shadow: 0 0 24px -6px rgba(110, 231, 183, 0.5);
+}
+.cidade-pagina .botao:hover::after {
+  transform: translateX(120%);
+}
+.cidade-pagina .botao .seta {
+  display: inline-block;
+  transition: transform 0.3s var(--suave);
+}
+.cidade-pagina .botao:hover .seta {
+  transform: translate(3px, -3px);
+}
+.cidade-pagina .botao-principal {
+  border-color: var(--verde);
+  background: rgba(110, 231, 183, 0.12);
+  color: #f0fdf7;
+}
+.cidade-pagina .botao-principal:hover {
+  background: rgba(110, 231, 183, 0.2);
+}
+
+.cidade-pagina .ponto-vivo {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-right: 0.45rem;
+  border-radius: 50%;
+  background: var(--verde);
+  box-shadow: 0 0 8px var(--verde);
+  vertical-align: 0.1em;
+}
+
+
+/* ── Telemetria nos cantos do topo ── */
+.cidade-pagina .telemetria {
+  position: absolute;
+  z-index: 2;
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: 0.64rem;
+  line-height: 1.9;
+  letter-spacing: 0.2em;
+  color: rgba(167, 243, 208, 0.78);
+  text-shadow: 0 0 2px #030605, 0 1px 10px rgba(3, 6, 5, 0.95), 0 0 18px rgba(3, 6, 5, 0.9);
+  pointer-events: none;
+}
+.cidade-pagina .telemetria-alto {
+  top: 5.5rem;
+  right: max(1.25rem, calc((100vw - 72rem) / 2 + 2rem));
+  text-align: right;
+}
+.cidade-pagina .telemetria-baixo {
+  right: max(1.25rem, calc((100vw - 72rem) / 2 + 2rem));
+  bottom: 2.2rem;
+  text-align: right;
+}
+.cidade-pagina .telemetria .fluxo {
+  color: rgba(167, 243, 208, 0.5);
+}
+.cidade-pagina .telemetria {
+  padding: 0.45rem 0.75rem;
+  border-right: 2px solid rgba(110, 231, 183, 0.6);
+  background: linear-gradient(270deg, rgba(3, 6, 5, 0.82), rgba(3, 6, 5, 0.45));
+  backdrop-filter: blur(4px);
+}
+@media (max-width: 767px) {
+  .cidade-pagina .telemetria-alto {
+    top: 4.4rem;
+    right: 1rem;
+    font-size: 0.56rem;
+  }
+  .cidade-pagina .telemetria-baixo {
+    display: none;
+  }
+}
+
+.cidade-pagina .telemetria .ponto-vivo {
+  animation: piscar-vivo 1.6s ease-in-out infinite;
+}
+@keyframes piscar-vivo {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.25; }
+}

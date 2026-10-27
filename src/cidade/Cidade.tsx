@@ -3,7 +3,7 @@
 import { useEffect, useRef } from 'react';
 import { LABORATORIO } from '@/portfolio/conteudo';
 import { iniciarCidade } from './motor';
-import '@/portfolio/portfolio.css';
+import './base.css';
 import './cidade.css';
 
 const { cidade } = LABORATORIO;

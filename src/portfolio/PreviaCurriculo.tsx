@@ -35,10 +35,10 @@ export function PreviaCurriculo({ className, style, rotulo = 'Ver currículo' }:
           if (e.target === e.currentTarget) e.currentTarget.close();
         }}>
         <div className="previa-barra">
-          <p className="font-mono text-[0.72rem] tracking-[0.14em] text-[var(--texto-suave)]">CURRÍCULO · {PESSOA.nome.toUpperCase()}</p>
+          <p className="mono">Currículo · {PESSOA.nome}</p>
           <div className="flex gap-2">
-            <a href={PESSOA.curriculo} download className="botao botao-principal">Baixar PDF</a>
-            <button type="button" className="botao" onClick={() => janela.current?.close()} aria-label="Fechar a prévia">✕</button>
+            <a href={PESSOA.curriculo} download className="botao chanfro mono">Baixar PDF</a>
+            <button type="button" className="botao vazado mono" onClick={() => janela.current?.close()} aria-label="Fechar a prévia">✕</button>
           </div>
         </div>
         <div className="previa-folhas">
