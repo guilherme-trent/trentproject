@@ -105,10 +105,10 @@ export const PROJETOS: Projeto[] = [
     stack: 'Next.js · TypeScript · Neon / PostgreSQL · Better Auth · Cloudflare R2 · Vercel',
     imagem: { src: '/portfolio/sunvoid/noticias.webp', alt: 'Notícias do jogo reunidas num lugar só, e os criadores parceiros numa aba', legenda: 'Notícias' },
     galeria: [
-      { src: '/portfolio/sunvoid/selecao.webp', alt: 'A seleção de agentes de SUNVOID no tema escuro, com o Pan Yinhu selecionado: retrato grande à esquerda e a grade de ícones à direita', legenda: 'Seleção de agentes' },
-      { src: '/portfolio/sunvoid/builds.webp', alt: 'Build verificada do Lighter: discos, motores-W e atributos principais', legenda: 'Builds verificadas' },
       { src: '/portfolio/sunvoid/ofertas.webp', alt: 'Ofertas de jogos: grátis para resgatar e promoções escolhidas pela equipe', legenda: 'Ofertas' },
       { src: '/portfolio/sunvoid/apoie.webp', alt: 'Página de apoio: Pix pelo Mercado Pago, com cargos no Discord entregues sozinhos', legenda: 'Apoio com Pix' },
+      { src: '/portfolio/sunvoid/builds.webp', alt: 'Build verificada do Lighter: discos, motores-W e atributos principais', legenda: 'Builds verificadas' },
+      { src: '/portfolio/sunvoid/selecao.webp', alt: 'A seleção de agentes de SUNVOID no tema escuro, com o Pan Yinhu selecionado: retrato grande à esquerda e a grade de ícones à direita', legenda: 'Seleção de agentes' },
     ],
     // O código é privado: o projeto aponta para a vitrine.
     links: [
