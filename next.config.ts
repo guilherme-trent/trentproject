@@ -8,8 +8,12 @@ const nextConfig: NextConfig = {
    * Faixas privadas comuns de Wi-Fi doméstico.
    */
   allowedDevOrigins: ["192.168.*.*", "10.*.*.*"],
-  /** Qualidades aceitas pelo next/image: 75 (padrão) e 90 (as telas dos projetos no portfólio, com texto miúdo). */
-  images: { qualities: [75, 90] },
+  /**
+   * Imagens servidas como estão, sem o otimizador da Vercel: a cota grátis dele acaba no mês e, a partir
+   * daí, toda imagem que ainda não estava no cache volta como 402 (tela em branco no carrossel). Os
+   * arquivos já são WebP no tamanho certo (o maior tem ~270 KB), então o otimizador quase não economizava.
+   */
+  images: { unoptimized: true },
 };
 
 export default nextConfig;
