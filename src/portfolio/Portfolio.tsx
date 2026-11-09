@@ -149,7 +149,7 @@ function CabecalhoSecao({ numero, titulo, id, lado }: { numero: number; titulo: 
 }
 
 function Projetos() {
-  const emProducao = PROJETOS.filter((p) => p.selo === 'em produção').length;
+  const emProducao = PROJETOS.filter(noAr).length;
   // null = a ficha cifrada, no lugar dela na grade
   const fichas: (Projeto | null)[] = [...PROJETOS];
   fichas.splice(CONFIDENCIAL.posicao, 0, null);
@@ -158,7 +158,7 @@ function Projetos() {
       <CabecalhoSecao numero={1} titulo="Projetos" id="titulo-projetos" lado={`${fichas.length} fichas · ${emProducao} em produção`} />
       <div className="grade">
         {fichas.map((p, i) => p
-          ? <Ficha key={p.id} projeto={p} indice={i} total={fichas.length} />
+          ? <Ficha key={p.id} projeto={p} indice={i} total={fichas.length} larga={fichas.length % 2 === 1 && i === fichas.length - 1} />
           : <FichaCifrada key="confidencial" indice={i} total={fichas.length} />)}
       </div>
     </section>
@@ -222,12 +222,16 @@ function FichaCifrada({ indice, total }: { indice: number; total: number }) {
   );
 }
 
-function Ficha({ projeto: p, indice, total }: { projeto: Projeto; indice: number; total: number }) {
+/** Projeto em uso por gente de fora: ganha o led no selo e entra na conta "em produção". */
+const noAr = (p: Projeto) => p.selo === 'em produção' || p.selo === 'no ar';
+
+/** `larga`: a última ficha quando sobra uma sozinha na linha; no PC ela ocupa a linha inteira, foto à esquerda. */
+function Ficha({ projeto: p, indice, total, larga = false }: { projeto: Projeto; indice: number; total: number; larga?: boolean }) {
   return (
-    <article className="ficha chanfro" data-revelar style={atraso((indice % 2) * 110)}>
+    <article className={`ficha chanfro${larga ? ' larga' : ''}`} data-revelar style={atraso(larga ? 0 : (indice % 2) * 110)}>
       <div className="foto">
         <Carrossel imagens={[p.imagem, ...(p.galeria ?? [])]} nome={p.nome} />
-        <span className="selo mono">{p.selo === 'em produção' && <span className="led" />}{p.selo}</span>
+        <span className="selo mono">{noAr(p) && <span className="led" />}{p.selo}</span>
       </div>
       <div className="corpo">
         <p className="id mono"><span>PROJ — {n2(indice)}</span><span>Ficha {n2(indice)} / {String(total).padStart(2, '0')}</span></p>
@@ -240,7 +244,9 @@ function Ficha({ projeto: p, indice, total }: { projeto: Projeto; indice: number
         </ol>
         <div className="pe">
           <p className="stack mono">{p.stack}</p>
-          <div className="links">{p.links.map((l) => <LinkFicha key={l.href} link={l} />)}</div>
+          {p.links.length
+            ? <div className="links">{p.links.map((l) => <LinkFicha key={l.href} link={l} />)}</div>
+            : <span className="restrito mono"><span className="cadeado" />Código privado</span>}
         </div>
       </div>
     </article>

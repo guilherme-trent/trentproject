@@ -195,6 +195,11 @@ html:has(.inicio) {
   .ficha .links { display: flex; gap: 18px; }
   .ficha .link { white-space: nowrap; transition: color 0.2s; }
   .ficha .link:hover { color: var(--verde-texto); }
+  .ficha .restrito { display: flex; align-items: center; gap: 8px; white-space: nowrap; color: var(--suave); }
+  /* sobrou uma ficha sozinha na última linha: ela ocupa a linha toda, com a foto do tamanho de uma coluna */
+  .ficha.larga { grid-column: 1 / -1; flex-direction: row; }
+  .ficha.larga .foto { flex: 0 0 calc(50% - 14px); align-self: flex-start; }
+  .ficha.larga .corpo { justify-content: center; padding: 28px 36px; }
 
   /* ── Carrossel das telas, na foto da ficha (rolagem nativa com scroll-snap) ── */
   .carrossel { position: absolute; inset: 0; }
@@ -227,7 +232,6 @@ html:has(.inicio) {
   /* a tarja é texto em linha: sem espaço, quebra em qualquer símbolo, e cada pedaço vira uma tarja inteira (box-decoration-break) */
   .ficha-cifrada li .tarjas { min-width: 0; line-height: 1.9; }
   .ficha-cifrada li .tarja { padding: 2px 8px; background: var(--tinta); color: rgba(255, 255, 255, 0.55); font-size: 12px; letter-spacing: 0.14em; overflow-wrap: anywhere; -webkit-box-decoration-break: clone; box-decoration-break: clone; }
-  .ficha-cifrada .restrito { display: flex; align-items: center; gap: 8px; white-space: nowrap; color: var(--suave); }
 
   /* ── Laboratório (escuro) ── */
   .lab { position: relative; overflow: hidden; background: var(--tinta); color: #fff; }
@@ -346,6 +350,9 @@ html.rolou .inicio .cabecalho { border-bottom-color: var(--fio); background: rgb
     .pendurada { min-height: 300px; }
     .cordao { display: none; }
     .projetos .grade, .lab .grade, .duas { grid-template-columns: minmax(0, 1fr); }
+    .ficha.larga { flex-direction: column; }
+    .ficha.larga .foto { flex: none; align-self: auto; }
+    .ficha.larga .corpo { padding: 24px 26px 26px; }
     .carrossel .seta { opacity: 0.85; }
     .exp .linha { grid-template-columns: 1fr; gap: 6px; }
     .contato-etiqueta .corpo { grid-template-columns: 1fr; }

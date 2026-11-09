@@ -96,7 +96,7 @@ export const PROJETOS: Projeto[] = [
     nome: 'SUNVOID',
     selo: 'em produção',
     proposta:
-      'A plataforma da comunidade brasileira de Zenless Zone Zero: builds, tier list, times, guias e notícias num só lugar.',
+      'A plataforma da comunidade brasileira de Zenless Zone Zero: builds, tier list, times, guias, notícias, ofertas e um torneio próprio, num só lugar.',
     beneficios: [
       { titulo: 'Entra com a conta do Discord,', texto: 'e site e servidor conversam: cargos, avisos e notícias chegam sozinhos.' },
       { titulo: 'Tier list com o cálculo aberto:', texto: 'cada nota de 0 a 100 mostra de onde veio.' },
@@ -114,6 +114,30 @@ export const PROJETOS: Projeto[] = [
     links: [
       { rotulo: 'Ver o site', href: 'https://sunvoid.com.br' },
       { rotulo: 'Ver o projeto', href: 'https://github.com/guilherme-trent/sunvoid' },
+    ],
+  },
+  {
+    id: 'cotton',
+    nome: 'MEI Place',
+    selo: 'no ar',
+    proposta: 'O lugar do MEI: abrir, entender e tocar o negócio num só app. Gratuito: a assinatura amplia, nunca trava o essencial.',
+    beneficios: [
+      { titulo: 'Venda feita, cobrança enviada:', texto: 'Pix, recibo e contrato prontos para o WhatsApp.' },
+      { titulo: 'O MEI explicado sem juridiquês,', texto: 'em 17 capítulos, com as 471 ocupações permitidas.' },
+      { titulo: 'DAS, limite e lucro sob controle,', texto: 'no celular e no computador, até sem internet.' },
+    ],
+    stack: 'React Native (Expo) · TypeScript · Neon / PostgreSQL · Better Auth · Vercel',
+    imagem: { src: '/portfolio/cotton.webp', alt: 'O Início do MEI Place no computador: faturado no ano, uso do limite, próximas datas, atalhos e o negócio por partes (dados fictícios)', legenda: 'Início' },
+    galeria: [
+      { src: '/portfolio/cotton/vendas.webp', alt: 'Vendas no computador: quanto falta receber, por tempo de atraso, e a cobrança pronta para o WhatsApp (dados fictícios)', legenda: 'Vendas' },
+      { src: '/portfolio/cotton/dinheiro.webp', alt: 'Dinheiro no computador: lucro do mês, entradas, saídas e para onde foi o dinheiro (dados fictícios)', legenda: 'Dinheiro' },
+      { src: '/portfolio/cotton/meumei.webp', alt: 'Meu MEI: DAS, relatório mensal, declaração anual, limite do ano e documentos num só lugar (dados fictícios)', legenda: 'Meu MEI' },
+      { src: '/portfolio/cotton/guia.webp', alt: 'O guia do MEI em 17 capítulos e três níveis, com o próximo capítulo à mão', legenda: 'Guia do MEI' },
+    ],
+    // O código é privado: o projeto aponta para a vitrine.
+    links: [
+      { rotulo: 'Ver o app', href: 'https://meiplace.com.br' },
+      { rotulo: 'Ver o projeto', href: 'https://github.com/guilherme-trent/mei-place' },
     ],
   },
   {
@@ -137,23 +161,25 @@ export const PROJETOS: Projeto[] = [
     links: [{ rotulo: 'Ver o projeto', href: 'https://github.com/guilherme-trent/vault-project' }],
   },
   {
-    id: 'cotton',
-    nome: 'Cotton Project',
-    selo: 'em desenvolvimento',
-    proposta: 'O escritório do MEI na palma da mão.',
+    id: 'forja',
+    nome: 'Forja',
+    selo: 'em uso diário',
+    proposta: 'A minha plataforma de estudos: pouco por dia, todo dia, para manter o conhecimento técnico afiado por anos.',
     beneficios: [
-      { titulo: 'Contratos profissionais em poucos toques,', texto: 'de serviço ou de venda, prontos para enviar.' },
-      { titulo: 'Vendas, clientes e estoque', texto: 'num só lugar.' },
-      { titulo: 'Estatísticas claras', texto: 'de como o negócio está indo.' },
+      { titulo: 'Lembra por mim do que revisar:', texto: 'repetição espaçada, 11 tipos de exercício e código rodando no próprio navegador.' },
+      { titulo: 'Simulados de entrevista com a IA,', texto: 'por voz ou texto, e cada lacuna vira cartão de revisão.' },
+      { titulo: 'Inglês treinado falando,', texto: 'com as 2.809 palavras mais úteis do idioma e teste de nível.' },
     ],
-    stack: 'React Native (Expo) · TypeScript · Supabase',
-    imagem: { src: '/portfolio/cotton.webp', alt: 'Três telas do aplicativo Cotton Project: itens de uma operação, faturamento com mapa de operações e clientes (dados fictícios)', legenda: 'Faturamento e clientes' },
+    stack: 'Next.js · TypeScript · Supabase / PostgreSQL · API da Anthropic · Pyodide',
+    imagem: { src: '/portfolio/forja/licao.webp', alt: 'Uma lição da Forja sobre Context e hooks no React: texto curto, código explicado e lupa em cada termo técnico', legenda: 'Lições' },
     galeria: [
-      { src: '/portfolio/cotton/02.webp', alt: 'Três telas do Cotton Project: painel, estatísticas e inventário (dados fictícios)', legenda: 'Painel e estatísticas' },
-      { src: '/portfolio/cotton/03.webp', alt: 'Três telas de uma operação: cliente, fechamento com pagamento e perfil do negócio (dados fictícios)', legenda: 'Do cliente ao fechamento' },
-      { src: '/portfolio/cotton/04.webp', alt: 'Os documentos que o app gera: contrato de prestação de serviços, recibo e relatório (dados fictícios)', legenda: 'Documentos gerados' },
+      { src: '/portfolio/forja/arvore.webp', alt: 'A árvore do conhecimento: cada trilha é um galho, que engrossa com o estudo e acende com o domínio', legenda: 'Árvore do conhecimento' },
+      { src: '/portfolio/forja/ingles.webp', alt: 'Inglês: o treino do dia e o nível medido no teste, por faixa de frequência das palavras', legenda: 'Inglês' },
+      { src: '/portfolio/forja/treino.webp', alt: 'Treino de inglês falado: a frase em português, a frase em inglês com lacuna e o botão para falar a palavra', legenda: 'Treino falado' },
+      { src: '/portfolio/forja/entrevista.webp', alt: 'Modo Entrevista: técnica, meus projetos, comportamental ou para uma vaga, com tamanho e modo do simulado', legenda: 'Modo Entrevista' },
     ],
-    links: [{ rotulo: 'Ver o projeto', href: 'https://github.com/guilherme-trent/cotton-project' }],
+    // Repositório privado e app de uso pessoal: sem link (a ficha mostra "código privado").
+    links: [],
   },
   {
     id: 'duelo',
@@ -181,11 +207,11 @@ export const PROJETOS: Projeto[] = [
 /**
  * A ficha cifrada: o produto da Atomtech, sob acordo de confidencialidade. Nome, benefícios e stack não
  * existem nem no código: a página desenha símbolos que se embaralham sem parar e nunca se decifram.
- * `posicao` é onde ela entra na grade (fecha os pares no PC).
+ * `posicao` é onde ela entra na grade (ao lado do MEI Place no PC). Com número ímpar de fichas, a última ocupa a linha inteira.
  */
 export const CONFIDENCIAL = {
   selo: 'confidencial',
-  posicao: 4,
+  posicao: 3,
   proposta:
     'Produto da Atomtech Energia Solar e Tecnologia, em que lidero produto e programação. Está sob acordo de confidencialidade, então a ficha fica cifrada.',
   /** Tamanho (em símbolos) de cada linha tarjada. */
