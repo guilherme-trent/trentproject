@@ -132,7 +132,7 @@ export const PROJETOS: Projeto[] = [
     proposta:
       'O registro oficial de inscrições e atendimentos de um projeto de educação tecnológica em escolas públicas do DF.',
     beneficios: [
-      { titulo: 'Mais de 15 mil atendimentos registrados,', texto: 'usado pela equipe todos os dias.' },
+      { titulo: 'Mais de 22 mil atendimentos registrados,', texto: 'usado pela equipe todos os dias.' },
       { titulo: 'Listas de presença lidas por foto com IA,', texto: 'com conferência automática do CPF antes de entrar no registro.' },
       { titulo: 'Dados de alunos protegidos no próprio banco:', texto: 'cada perfil vê só o que pode, como pede a LGPD.' },
     ],
