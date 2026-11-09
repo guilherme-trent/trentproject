@@ -219,6 +219,39 @@ html:has(.inicio) {
   .rodape-carrossel .pontos button[aria-current='true'] { width: 26px; background-color: var(--verde); }
   .rodape-carrossel .contador { white-space: nowrap; color: rgba(255, 255, 255, 0.7); }
 
+  /* ── Ver no celular: o botão na foto da ficha e a janela com o aparelho (VerNoCelular) ── */
+  .ver-celular { --c: 8px; position: absolute; right: 14px; top: 14px; z-index: 2; display: flex; align-items: center; gap: 8px; padding: 7px 12px 7px 10px; background: var(--tinta); color: #fff; font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; transition: background 0.2s, color 0.2s; }
+  .ver-celular:hover, .ver-celular:focus-visible { background: var(--verde); color: var(--tinta); }
+  .icone-celular { position: relative; flex: none; width: 9px; height: 14px; border: 1.5px solid currentColor; border-radius: 2.5px; }
+  .icone-celular::after { content: ''; position: absolute; left: 50%; bottom: 1.5px; width: 3px; height: 1.5px; background: currentColor; transform: translateX(-50%); }
+
+  /* a janela cobre a tela toda e é transparente: clicar fora do aparelho é clicar nela, e ela fecha */
+  .janela-celular { width: 100vw; height: 100dvh; max-width: none; max-height: none; margin: 0; padding: 0; border: 0; background: transparent; color: #fff; overflow: hidden; }
+  .janela-celular[open] { display: grid; place-items: center; }
+  .janela-celular::backdrop { background: rgba(12, 12, 14, 0.82); backdrop-filter: blur(6px); }
+  .janela-celular-conteudo { --altura: min(calc(100dvh - 190px), 720px); display: flex; flex-direction: column; align-items: center; gap: 18px; }
+  .janela-celular[open] .janela-celular-conteudo { animation: aparelho-entra 0.45s var(--curva); }
+  .janela-celular-barra { display: flex; align-items: center; justify-content: space-between; gap: 18px; width: calc(var(--altura) * 390 / 844 + 22px); min-width: 280px; }
+  .janela-celular-barra p { display: flex; align-items: center; gap: 10px; font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: rgba(255, 255, 255, 0.82); }
+  .janela-celular-barra p .icone-celular { color: var(--verde); }
+  .janela-celular .fechar { display: grid; place-items: center; width: 36px; height: 36px; border: 1px solid rgba(255, 255, 255, 0.28); color: #fff; font-size: 14px; transition: background 0.2s, border-color 0.2s, color 0.2s; }
+  .janela-celular .fechar:hover, .janela-celular .fechar:focus-visible { background: var(--verde); border-color: var(--verde); color: var(--tinta); }
+
+  /* o aparelho: moldura escura com brilho de borda, botões laterais e a tela em 390×844 */
+  .aparelho { position: relative; padding: 11px; border-radius: 52px; background: linear-gradient(145deg, #2c2c32, #0c0c0e 38%, #18181c); box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, 0.14), 0 0 0 1px rgba(0, 0, 0, 0.6), 0 40px 90px rgba(0, 0, 0, 0.55); }
+  .aparelho .tela { position: relative; height: var(--altura); aspect-ratio: 390 / 844; border-radius: 41px; background: #0c0c0e; }
+  .botao-lateral { position: absolute; width: 4px; border-radius: 2px; background: linear-gradient(90deg, #1c1c20, #3a3a42); }
+  .botao-lateral.volume { left: -3px; top: 20%; height: 12%; }
+  .botao-lateral.energia { right: -3px; top: 26%; height: 9%; }
+  .janela-celular .carrossel .trilho { border-radius: 41px; }
+  .janela-celular .carrossel .slide img { object-fit: cover; object-position: top; }
+  /* setas fora do aparelho, sempre à vista; legenda, pontos e contador logo abaixo dele */
+  .janela-celular .carrossel .seta { opacity: 1; background: rgba(255, 255, 255, 0.1); }
+  .janela-celular .carrossel .seta:hover, .janela-celular .carrossel .seta:focus-visible { background: var(--verde); color: var(--tinta); }
+  .janela-celular .carrossel .anterior { left: -82px; }
+  .janela-celular .carrossel .proxima { right: -82px; }
+  .janela-celular .rodape-carrossel { top: calc(100% + 26px); bottom: auto; padding: 0; background: none; }
+
   /* ── A ficha cifrada (Atomtech, sob acordo de confidencialidade): cifra viva no lugar do produto ── */
   .ficha-cifrada .foto { background: var(--tinta); }
   .painel-cifra { position: absolute; inset: 0; box-sizing: border-box; margin: 0; padding: 12px 14px; overflow: hidden; font-size: 12px; line-height: 1.3; letter-spacing: 0.18em; white-space: pre; color: rgba(31, 163, 92, 0.36); user-select: none; transition: color 0.4s; }
@@ -315,7 +348,7 @@ html:has(.inicio) {
   .previa-folha { width: 100%; height: auto; box-shadow: 0 10px 30px rgba(12, 12, 14, 0.12); }
   .previa-curriculo[open] .previa-folhas { animation: previa-entra 0.35s var(--curva); }
 }
-html:has(.inicio .previa-curriculo[open]) {
+html:has(.inicio .previa-curriculo[open]), html:has(.inicio .janela-celular[open]) {
   overflow: hidden; /* a página atrás não rola enquanto a prévia está aberta */
 }
 html.rolou .inicio .cabecalho { border-bottom-color: var(--fio); background: rgba(255, 255, 255, 0.9); }
@@ -334,6 +367,7 @@ html.rolou .inicio .cabecalho { border-bottom-color: var(--fio); background: rgb
   .inicio .led { animation-duration: 3.2s; }
   .inicio .letreiro-trilho { animation-duration: 160s; }
   .inicio .ficha-cifrada .varredura { animation-duration: 9s; }
+  .inicio .janela-celular[open] .janela-celular-conteudo { animation: none; }
 }
 
 @keyframes subir { from { opacity: 0; transform: translateY(16px); } }
@@ -342,6 +376,7 @@ html.rolou .inicio .cabecalho { border-bottom-color: var(--fio); background: rgb
 @keyframes piscar { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
 @keyframes varrer { from { transform: translateY(-100%); } to { transform: translateY(340%); } }
 @keyframes previa-entra { from { opacity: 0; transform: translateY(12px); } }
+@keyframes aparelho-entra { from { opacity: 0; transform: translateY(24px) scale(0.97); } }
 
 /* ── Tablet e celular ── */
 @media (max-width: 980px) {
@@ -351,6 +386,9 @@ html.rolou .inicio .cabecalho { border-bottom-color: var(--fio); background: rgb
     .cordao { display: none; }
     .projetos .grade, .lab .grade, .duas { grid-template-columns: minmax(0, 1fr); }
     .ficha.larga { flex-direction: column; }
+    .janela-celular .carrossel .anterior { left: 10px; }
+    .janela-celular .carrossel .proxima { right: 10px; }
+    .janela-celular .carrossel .seta { background: rgba(12, 12, 14, 0.72); }
     .ficha.larga .foto { flex: none; align-self: auto; }
     .ficha.larga .corpo { padding: 24px 26px 26px; }
     .carrossel .seta { opacity: 0.85; }

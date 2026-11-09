@@ -3,6 +3,7 @@ import Link from 'next/link';
 import type { CSSProperties } from 'react';
 import { Animacoes } from './Animacoes';
 import { Carrossel } from './Carrossel';
+import { VerNoCelular } from './VerNoCelular';
 import {
   CONFIDENCIAL, CURIOSIDADE, DESTAQUE, EXPERIENCIA, FERRAMENTAS, FORMACAO, LABORATORIO, PESSOA, PILARES, PROJETOS,
   type Link as LinkDoProjeto, type Projeto,
@@ -232,6 +233,7 @@ function Ficha({ projeto: p, indice, total, larga = false }: { projeto: Projeto;
       <div className="foto">
         <Carrossel imagens={[p.imagem, ...(p.galeria ?? [])]} nome={p.nome} />
         <span className="selo mono">{noAr(p) && <span className="led" />}{p.selo}</span>
+        {p.celular && <VerNoCelular telas={p.celular} nome={p.nome} />}
       </div>
       <div className="corpo">
         <p className="id mono"><span>PROJ — {n2(indice)}</span><span>Ficha {n2(indice)} / {String(total).padStart(2, '0')}</span></p>

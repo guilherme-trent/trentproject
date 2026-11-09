@@ -47,6 +47,8 @@ export interface Projeto {
   imagem: Imagem;
   /** Mais telas do projeto, depois da capa: viram o carrossel da ficha. */
   galeria?: Imagem[];
+  /** Telas do app no celular (390×844, em 2x): a ficha ganha o botão "Ver no celular", que abre num aparelho. */
+  celular?: Imagem[];
   links: Link[];
 }
 
@@ -71,25 +73,35 @@ export const DESTAQUE: Projeto = {
 
 export const PROJETOS: Projeto[] = [
   {
-    id: 'gamifica',
-    nome: 'Gamifica · Dashboard Educacional',
-    selo: 'em produção',
-    proposta:
-      'O registro oficial de inscrições e atendimentos de um projeto de educação tecnológica em escolas públicas do DF.',
+    id: 'cotton',
+    nome: 'MEI Place',
+    selo: 'no ar',
+    proposta: 'O lugar do MEI: abrir, entender e tocar o negócio num só app. Gratuito: a assinatura amplia, nunca trava o essencial.',
     beneficios: [
-      { titulo: 'Mais de 15 mil atendimentos registrados,', texto: 'usado pela equipe todos os dias.' },
-      { titulo: 'Listas de presença lidas por foto com IA,', texto: 'com conferência automática do CPF antes de entrar no registro.' },
-      { titulo: 'Dados de alunos protegidos no próprio banco:', texto: 'cada perfil vê só o que pode, como pede a LGPD.' },
+      { titulo: 'Venda feita, cobrança enviada:', texto: 'Pix, recibo e contrato prontos para o WhatsApp.' },
+      { titulo: 'O MEI explicado sem juridiquês,', texto: 'em 17 capítulos, com as 471 ocupações permitidas.' },
+      { titulo: 'DAS, limite e lucro sob controle,', texto: 'no celular e no computador, até sem internet.' },
     ],
-    stack: 'React · TypeScript · Supabase / PostgreSQL · Vercel · API da Anthropic',
-    imagem: { src: '/portfolio/gamifica.webp', alt: 'Visão geral do Dashboard do Gamifica: alunos, atendimentos, volume por trilha e atendimentos por região (dados fictícios)', legenda: 'Visão geral' },
+    stack: 'React Native (Expo) · TypeScript · Neon / PostgreSQL · Better Auth · Vercel',
+    imagem: { src: '/portfolio/cotton.webp', alt: 'O Início do MEI Place no computador: faturado no ano, uso do limite, próximas datas, atalhos e o negócio por partes (dados fictícios)', legenda: 'Início' },
     galeria: [
-      { src: '/portfolio/gamifica/02.webp', alt: 'Lista de alunos com as 7 trilhas de cada um (dados fictícios)', legenda: 'Alunos' },
-      { src: '/portfolio/gamifica/03.webp', alt: 'Ficha do aluno com a presença nas trilhas e os dados pessoais ocultos (dados fictícios)', legenda: 'Ficha do aluno' },
-      { src: '/portfolio/gamifica/04.webp', alt: 'Envio da equipe em revisão, com aprovar, mudar local e rejeitar (dados fictícios)', legenda: 'Revisão e aprovação' },
-      { src: '/portfolio/gamifica/05.webp', alt: 'Importação por foto: a equipe escolhe região, local e turma e fotografa a lista de presença', legenda: 'Importação por foto' },
+      { src: '/portfolio/cotton/vendas.webp', alt: 'Vendas no computador: quanto falta receber, por tempo de atraso, e a cobrança pronta para o WhatsApp (dados fictícios)', legenda: 'Vendas' },
+      { src: '/portfolio/cotton/dinheiro.webp', alt: 'Dinheiro no computador: lucro do mês, entradas, saídas e para onde foi o dinheiro (dados fictícios)', legenda: 'Dinheiro' },
+      { src: '/portfolio/cotton/meumei.webp', alt: 'Meu MEI: DAS, relatório mensal, declaração anual, limite do ano e documentos num só lugar (dados fictícios)', legenda: 'Meu MEI' },
+      { src: '/portfolio/cotton/guia.webp', alt: 'O guia do MEI em 17 capítulos e três níveis, com o próximo capítulo à mão', legenda: 'Guia do MEI' },
     ],
-    links: [{ rotulo: 'Ver o projeto', href: 'https://github.com/guilherme-trent/dashboard-gamifica' }],
+    // O código é privado: o projeto aponta para a vitrine.
+    celular: [
+      { src: '/portfolio/cotton/celular/inicio.webp', alt: 'Início no celular: faturado no ano, uso do limite, próximas datas e a nova venda à mão (dados fictícios)', legenda: 'Início' },
+      { src: '/portfolio/cotton/celular/vendas.webp', alt: 'Vendas no celular: quanto te devem, por tempo de atraso, e a cobrança pronta para o WhatsApp (dados fictícios)', legenda: 'Vendas' },
+      { src: '/portfolio/cotton/celular/dinheiro.webp', alt: 'Dinheiro no celular: seis meses em ondas, entradas por forma de pagamento e custos (dados fictícios)', legenda: 'Dinheiro' },
+      { src: '/portfolio/cotton/celular/guia.webp', alt: 'O guia do MEI no celular: 17 capítulos em três níveis', legenda: 'Guia do MEI' },
+      { src: '/portfolio/cotton/celular/capitulo.webp', alt: 'Uma tela do capítulo sobre como formar o preço, com ilustração e exemplo na prática', legenda: 'Capítulo do guia' },
+    ],
+    links: [
+      { rotulo: 'Ver o app', href: 'https://meiplace.com.br' },
+      { rotulo: 'Ver o projeto', href: 'https://github.com/guilherme-trent/mei-place' },
+    ],
   },
   {
     id: 'sunvoid',
@@ -111,54 +123,45 @@ export const PROJETOS: Projeto[] = [
       { src: '/portfolio/sunvoid/selecao.webp', alt: 'A seleção de agentes de SUNVOID no tema escuro, com o Pan Yinhu selecionado: retrato grande à esquerda e a grade de ícones à direita', legenda: 'Seleção de agentes' },
     ],
     // O código é privado: o projeto aponta para a vitrine.
+    celular: [
+      { src: '/portfolio/sunvoid/celular/inicio.webp', alt: 'A seleção de agentes de SUNVOID no celular, no tema escuro', legenda: 'Seleção de agentes' },
+      { src: '/portfolio/sunvoid/celular/lighter.webp', alt: 'A página do agente Lighter no celular, com o retrato, o rank e os atributos', legenda: 'Página do agente' },
+      { src: '/portfolio/sunvoid/celular/noticias.webp', alt: 'Notícias do jogo no celular, reunidas num lugar só', legenda: 'Notícias' },
+      { src: '/portfolio/sunvoid/celular/cup.webp', alt: 'O Sunvoid Cup no celular: a edição aberta para inscrição e o ranking ao vivo por liga', legenda: 'Sunvoid Cup' },
+      { src: '/portfolio/sunvoid/celular/ofertas.webp', alt: 'Ofertas no celular: jogos grátis para resgatar e promoções', legenda: 'Ofertas' },
+    ],
     links: [
       { rotulo: 'Ver o site', href: 'https://sunvoid.com.br' },
       { rotulo: 'Ver o projeto', href: 'https://github.com/guilherme-trent/sunvoid' },
     ],
   },
   {
-    id: 'cotton',
-    nome: 'MEI Place',
-    selo: 'no ar',
-    proposta: 'O lugar do MEI: abrir, entender e tocar o negócio num só app. Gratuito: a assinatura amplia, nunca trava o essencial.',
+    id: 'gamifica',
+    nome: 'Gamifica · Dashboard Educacional',
+    selo: 'em produção',
+    proposta:
+      'O registro oficial de inscrições e atendimentos de um projeto de educação tecnológica em escolas públicas do DF.',
     beneficios: [
-      { titulo: 'Venda feita, cobrança enviada:', texto: 'Pix, recibo e contrato prontos para o WhatsApp.' },
-      { titulo: 'O MEI explicado sem juridiquês,', texto: 'em 17 capítulos, com as 471 ocupações permitidas.' },
-      { titulo: 'DAS, limite e lucro sob controle,', texto: 'no celular e no computador, até sem internet.' },
+      { titulo: 'Mais de 15 mil atendimentos registrados,', texto: 'usado pela equipe todos os dias.' },
+      { titulo: 'Listas de presença lidas por foto com IA,', texto: 'com conferência automática do CPF antes de entrar no registro.' },
+      { titulo: 'Dados de alunos protegidos no próprio banco:', texto: 'cada perfil vê só o que pode, como pede a LGPD.' },
     ],
-    stack: 'React Native (Expo) · TypeScript · Neon / PostgreSQL · Better Auth · Vercel',
-    imagem: { src: '/portfolio/cotton.webp', alt: 'O Início do MEI Place no computador: faturado no ano, uso do limite, próximas datas, atalhos e o negócio por partes (dados fictícios)', legenda: 'Início' },
+    stack: 'React · TypeScript · Supabase / PostgreSQL · Vercel · API da Anthropic',
+    imagem: { src: '/portfolio/gamifica.webp', alt: 'Visão geral do Dashboard do Gamifica: alunos, atendimentos, volume por trilha e atendimentos por região (dados fictícios)', legenda: 'Visão geral' },
     galeria: [
-      { src: '/portfolio/cotton/vendas.webp', alt: 'Vendas no computador: quanto falta receber, por tempo de atraso, e a cobrança pronta para o WhatsApp (dados fictícios)', legenda: 'Vendas' },
-      { src: '/portfolio/cotton/dinheiro.webp', alt: 'Dinheiro no computador: lucro do mês, entradas, saídas e para onde foi o dinheiro (dados fictícios)', legenda: 'Dinheiro' },
-      { src: '/portfolio/cotton/meumei.webp', alt: 'Meu MEI: DAS, relatório mensal, declaração anual, limite do ano e documentos num só lugar (dados fictícios)', legenda: 'Meu MEI' },
-      { src: '/portfolio/cotton/guia.webp', alt: 'O guia do MEI em 17 capítulos e três níveis, com o próximo capítulo à mão', legenda: 'Guia do MEI' },
+      { src: '/portfolio/gamifica/02.webp', alt: 'Lista de alunos com as 7 trilhas de cada um (dados fictícios)', legenda: 'Alunos' },
+      { src: '/portfolio/gamifica/03.webp', alt: 'Ficha do aluno com a presença nas trilhas e os dados pessoais ocultos (dados fictícios)', legenda: 'Ficha do aluno' },
+      { src: '/portfolio/gamifica/04.webp', alt: 'Envio da equipe em revisão, com aprovar, mudar local e rejeitar (dados fictícios)', legenda: 'Revisão e aprovação' },
+      { src: '/portfolio/gamifica/05.webp', alt: 'Importação por foto: a equipe escolhe região, local e turma e fotografa a lista de presença', legenda: 'Importação por foto' },
     ],
-    // O código é privado: o projeto aponta para a vitrine.
-    links: [
-      { rotulo: 'Ver o app', href: 'https://meiplace.com.br' },
-      { rotulo: 'Ver o projeto', href: 'https://github.com/guilherme-trent/mei-place' },
+    celular: [
+      { src: '/portfolio/gamifica/celular/visao.webp', alt: 'Visão geral no celular: alunos, atendimentos e a meta, com a barra de abas embaixo (dados fictícios)', legenda: 'Visão geral' },
+      { src: '/portfolio/gamifica/celular/alunos.webp', alt: 'Lista de alunos no celular, com busca, filtros e as trilhas de cada um (dados fictícios)', legenda: 'Alunos' },
+      { src: '/portfolio/gamifica/celular/aluno.webp', alt: 'Ficha do aluno no celular, com a presença marcada em cada trilha (dados fictícios)', legenda: 'Registrar presença' },
+      { src: '/portfolio/gamifica/celular/revisao-envio.webp', alt: 'Envio da equipe em revisão no celular: aprovar, mudar local ou rejeitar (dados fictícios)', legenda: 'Revisão' },
+      { src: '/portfolio/gamifica/celular/importar.webp', alt: 'Importação por foto no celular: região, local e turma antes de fotografar a lista', legenda: 'Importação por foto' },
     ],
-  },
-  {
-    id: 'vault',
-    nome: 'Vault Project',
-    selo: 'em desenvolvimento',
-    proposta: 'Estúdio de personagens com IA para criadores de conteúdo.',
-    beneficios: [
-      { titulo: 'O mesmo personagem hiper-realista em todos os vídeos:', texto: 'ele vira a sua marca.' },
-      { titulo: 'Três formas de fazer vídeo:', texto: 'grave você, colabore com convidados ou recrie uma trend.' },
-      { titulo: 'Publique com tranquilidade:', texto: 'consentimento e direitos de imagem já vêm embutidos.' },
-    ],
-    stack: 'Node.js · TypeScript · Fastify · PostgreSQL · AWS · Pix',
-    imagem: { src: '/portfolio/vault.webp', alt: 'Tela de novo vídeo do Vault Project, com os três modos: Grave você, Colaboração e Recriar trend', legenda: 'Novo vídeo' },
-    galeria: [
-      { src: '/portfolio/vault/02.webp', alt: 'Personagens: cada um nasce com 4 imagens de referência, com o mesmo rosto em todos os ângulos', legenda: 'Personagens' },
-      { src: '/portfolio/vault/03.webp', alt: 'Fila de vídeos: a etapa de cada um, e um vídeo barrado pela proteção de consentimento, sem cobrança', legenda: 'Fila' },
-      { src: '/portfolio/vault/04.webp', alt: 'Créditos: pacotes comprados por Pix e o extrato completo', legenda: 'Créditos' },
-      { src: '/portfolio/vault/05.webp', alt: 'O que o convidado vê: lê o termo, tira a selfie e autoriza, sem precisar de conta', legenda: 'Convite do colaborador' },
-    ],
-    links: [{ rotulo: 'Ver o projeto', href: 'https://github.com/guilherme-trent/vault-project' }],
+    links: [{ rotulo: 'Ver o projeto', href: 'https://github.com/guilherme-trent/dashboard-gamifica' }],
   },
   {
     id: 'forja',
@@ -180,6 +183,26 @@ export const PROJETOS: Projeto[] = [
     ],
     // Repositório privado e app de uso pessoal: sem link (a ficha mostra "código privado").
     links: [],
+  },
+  {
+    id: 'vault',
+    nome: 'Vault Project',
+    selo: 'em desenvolvimento',
+    proposta: 'Estúdio de personagens com IA para criadores de conteúdo.',
+    beneficios: [
+      { titulo: 'O mesmo personagem hiper-realista em todos os vídeos:', texto: 'ele vira a sua marca.' },
+      { titulo: 'Três formas de fazer vídeo:', texto: 'grave você, colabore com convidados ou recrie uma trend.' },
+      { titulo: 'Publique com tranquilidade:', texto: 'consentimento e direitos de imagem já vêm embutidos.' },
+    ],
+    stack: 'Node.js · TypeScript · Fastify · PostgreSQL · AWS · Pix',
+    imagem: { src: '/portfolio/vault.webp', alt: 'Tela de novo vídeo do Vault Project, com os três modos: Grave você, Colaboração e Recriar trend', legenda: 'Novo vídeo' },
+    galeria: [
+      { src: '/portfolio/vault/02.webp', alt: 'Personagens: cada um nasce com 4 imagens de referência, com o mesmo rosto em todos os ângulos', legenda: 'Personagens' },
+      { src: '/portfolio/vault/03.webp', alt: 'Fila de vídeos: a etapa de cada um, e um vídeo barrado pela proteção de consentimento, sem cobrança', legenda: 'Fila' },
+      { src: '/portfolio/vault/04.webp', alt: 'Créditos: pacotes comprados por Pix e o extrato completo', legenda: 'Créditos' },
+      { src: '/portfolio/vault/05.webp', alt: 'O que o convidado vê: lê o termo, tira a selfie e autoriza, sem precisar de conta', legenda: 'Convite do colaborador' },
+    ],
+    links: [{ rotulo: 'Ver o projeto', href: 'https://github.com/guilherme-trent/vault-project' }],
   },
   {
     id: 'duelo',
@@ -207,11 +230,11 @@ export const PROJETOS: Projeto[] = [
 /**
  * A ficha cifrada: o produto da Atomtech, sob acordo de confidencialidade. Nome, benefícios e stack não
  * existem nem no código: a página desenha símbolos que se embaralham sem parar e nunca se decifram.
- * `posicao` é onde ela entra na grade (ao lado do MEI Place no PC). Com número ímpar de fichas, a última ocupa a linha inteira.
+ * `posicao` é onde ela entra na grade (3ª, logo depois de MEI Place e SUNVOID). Com número ímpar de fichas, a última ocupa a linha inteira.
  */
 export const CONFIDENCIAL = {
   selo: 'confidencial',
-  posicao: 3,
+  posicao: 2,
   proposta:
     'Produto da Atomtech Energia Solar e Tecnologia, em que lidero produto e programação. Está sob acordo de confidencialidade, então a ficha fica cifrada.',
   /** Tamanho (em símbolos) de cada linha tarjada. */
