@@ -49,6 +49,8 @@ export interface Projeto {
   galeria?: Imagem[];
   /** Telas do app no celular (390×844, em 2x): a ficha ganha o botão "Ver no celular", que abre num aparelho. */
   celular?: Imagem[];
+  /** O app de verdade dentro do aparelho (iframe), no lugar das telas: o endereço e a nota que vai embaixo. */
+  celularAoVivo?: { endereco: string; nota: string };
   links: Link[];
 }
 
@@ -91,13 +93,7 @@ export const PROJETOS: Projeto[] = [
       { src: '/portfolio/cotton/guia.webp', alt: 'O guia do MEI em 17 capítulos e três níveis, com o próximo capítulo à mão', legenda: 'Guia do MEI' },
     ],
     // O código é privado: o projeto aponta para a vitrine.
-    celular: [
-      { src: '/portfolio/cotton/celular/inicio.webp', alt: 'Início no celular: faturado no ano, uso do limite, próximas datas e a nova venda à mão (dados fictícios)', legenda: 'Início' },
-      { src: '/portfolio/cotton/celular/vendas.webp', alt: 'Vendas no celular: quanto te devem, por tempo de atraso, e a cobrança pronta para o WhatsApp (dados fictícios)', legenda: 'Vendas' },
-      { src: '/portfolio/cotton/celular/dinheiro.webp', alt: 'Dinheiro no celular: seis meses em ondas, entradas por forma de pagamento e custos (dados fictícios)', legenda: 'Dinheiro' },
-      { src: '/portfolio/cotton/celular/guia.webp', alt: 'O guia do MEI no celular: 17 capítulos em três níveis', legenda: 'Guia do MEI' },
-      { src: '/portfolio/cotton/celular/capitulo.webp', alt: 'Uma tela do capítulo sobre como formar o preço, com ilustração e exemplo na prática', legenda: 'Capítulo do guia' },
-    ],
+    celularAoVivo: { endereco: 'https://meiplace.com.br/painel?demo', nota: 'o app de verdade, com um negócio fictício' },
     links: [
       { rotulo: 'Ver o app', href: 'https://meiplace.com.br' },
       { rotulo: 'Ver o projeto', href: 'https://github.com/guilherme-trent/mei-place' },
@@ -123,13 +119,7 @@ export const PROJETOS: Projeto[] = [
       { src: '/portfolio/sunvoid/selecao.webp', alt: 'A seleção de agentes de SUNVOID no tema escuro, com o Pan Yinhu selecionado: retrato grande à esquerda e a grade de ícones à direita', legenda: 'Seleção de agentes' },
     ],
     // O código é privado: o projeto aponta para a vitrine.
-    celular: [
-      { src: '/portfolio/sunvoid/celular/inicio.webp', alt: 'A seleção de agentes de SUNVOID no celular, no tema escuro', legenda: 'Seleção de agentes' },
-      { src: '/portfolio/sunvoid/celular/lighter.webp', alt: 'A página do agente Lighter no celular, com o retrato, o rank e os atributos', legenda: 'Página do agente' },
-      { src: '/portfolio/sunvoid/celular/noticias.webp', alt: 'Notícias do jogo no celular, reunidas num lugar só', legenda: 'Notícias' },
-      { src: '/portfolio/sunvoid/celular/cup.webp', alt: 'O Sunvoid Cup no celular: a edição aberta para inscrição e o ranking ao vivo por liga', legenda: 'Sunvoid Cup' },
-      { src: '/portfolio/sunvoid/celular/ofertas.webp', alt: 'Ofertas no celular: jogos grátis para resgatar e promoções', legenda: 'Ofertas' },
-    ],
+    celularAoVivo: { endereco: 'https://sunvoid.com.br/', nota: 'o site no ar' },
     links: [
       { rotulo: 'Ver o site', href: 'https://sunvoid.com.br' },
       { rotulo: 'Ver o projeto', href: 'https://github.com/guilherme-trent/sunvoid' },

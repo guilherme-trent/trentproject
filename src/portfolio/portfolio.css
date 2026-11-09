@@ -251,6 +251,14 @@ html:has(.inicio) {
   .janela-celular .carrossel .anterior { left: -82px; }
   .janela-celular .carrossel .proxima { right: -82px; }
   .janela-celular .rodape-carrossel { top: calc(100% + 26px); bottom: auto; padding: 0; background: none; }
+  /* o app ao vivo: iframe de 390 px encolhido para a tela do aparelho (VerNoCelular › AoVivo) */
+  .ao-vivo { position: absolute; inset: 0; overflow: hidden; border-radius: 41px; background: #f5f5f2; }
+  .ao-vivo iframe { position: absolute; left: 0; top: 0; border: 0; transform-origin: 0 0; transition: opacity 0.35s; }
+  .ao-vivo .abrindo { position: absolute; inset: 0; display: grid; place-items: center; color: var(--suave); font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; }
+  .janela-celular-barra .led { margin-left: 2px; }
+  .nota-ao-vivo { font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(255, 255, 255, 0.6); }
+  .nota-ao-vivo a { color: #fff; text-decoration: underline; text-underline-offset: 3px; }
+  .nota-ao-vivo a:hover { color: var(--verde); }
 
   /* ── A ficha cifrada (Atomtech, sob acordo de confidencialidade): cifra viva no lugar do produto ── */
   .ficha-cifrada .foto { background: var(--tinta); }

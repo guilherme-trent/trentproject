@@ -233,7 +233,7 @@ function Ficha({ projeto: p, indice, total, larga = false }: { projeto: Projeto;
       <div className="foto">
         <Carrossel imagens={[p.imagem, ...(p.galeria ?? [])]} nome={p.nome} />
         <span className="selo mono">{noAr(p) && <span className="led" />}{p.selo}</span>
-        {p.celular && <VerNoCelular telas={p.celular} nome={p.nome} />}
+        {(p.celular || p.celularAoVivo) && <VerNoCelular telas={p.celular} aoVivo={p.celularAoVivo} nome={p.nome} />}
       </div>
       <div className="corpo">
         <p className="id mono"><span>PROJ — {n2(indice)}</span><span>Ficha {n2(indice)} / {String(total).padStart(2, '0')}</span></p>
